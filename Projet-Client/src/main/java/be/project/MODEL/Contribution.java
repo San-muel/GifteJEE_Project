@@ -1,13 +1,15 @@
 package be.project.MODEL;
 
+import java.io.Serializable;
 import java.time.LocalDateTime;
 import java.util.HashSet;
 import java.util.Objects;
 import java.util.Set;
 
-public class Contribution {
+public class Contribution implements Serializable {
 
-    private int id;
+	private static final long serialVersionUID = -5457008270231888261L;
+	private int id;
     private double amount;
     private LocalDateTime contributedAt;
     private String comment;
