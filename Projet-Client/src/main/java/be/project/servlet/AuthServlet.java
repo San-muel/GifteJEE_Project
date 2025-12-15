@@ -1,7 +1,7 @@
 package be.project.servlet;
 
-import be.project.DAO.UserDAO;
 import be.project.MODEL.User;
+import be.project.service.UserService; // Import du Service Layer
 import javax.servlet.ServletException;
 import javax.servlet.annotation.WebServlet;
 import javax.servlet.http.HttpServlet;
@@ -13,11 +13,10 @@ import java.io.IOException;
 public class AuthServlet extends HttpServlet {
     private static final long serialVersionUID = 1L;
 
-    // IMPORTANT : Ce UserDAO est le DAO du CLIENT qui appelle l'API RESTful.
-    private final UserDAO userDAO = new UserDAO();
+    // CORRECTION : Le contrôleur appelle la couche Service, et non le DAO.
+    private final UserService userService = new UserService(); 
 
     // --- 1. GESTION DE L'AFFICHAGE DU FORMULAIRE (GET) ---
-    // Cette méthode est utilisée pour l'affichage initial OU en cas d'erreur
     protected void doGet(HttpServletRequest request, HttpServletResponse response) 
             throws ServletException, IOException {
         
@@ -39,38 +38,39 @@ public class AuthServlet extends HttpServlet {
         
         // 2a. Vérification des champs vides
         if (email == null || email.isEmpty() || password == null || password.isEmpty()) {
+            // Logique du Contrôleur : Définir l'erreur et afficher la vue
             request.setAttribute("errorMessage", "Veuillez entrer votre email et mot de passe.");
             request.setAttribute("email", email); 
-            doGet(request, response); // Réutilise doGet pour faire le forward vers la JSP avec l'erreur
+            doGet(request, response); 
             return;
         }
 
         try {
             System.out.println("DEBUG AUTH SERVLET: Tentative d'authentification pour : " + email);
             
-            // 2b. Appel au DAO du Client pour contacter l'API RESTful
-            User authenticatedUser = userDAO.authenticate(email, password);
+            // 2b. Appel au SERVICE pour gérer l'authentification (Délégation de la logique métier/DAO)
+            User authenticatedUser = userService.authenticateUser(email, password);
             
             if (authenticatedUser != null) {
-                // Succès : Stockage de l'objet User (qui contient le token) dans la session
-                System.out.println("DEBUG AUTH SERVLET: Authentification réussie. Token stocké. Redirection.");
+                // Succès : Logique du Contrôleur : Gérer la session et la redirection
+                System.out.println("DEBUG AUTH SERVLET: Authentification réussie. Redirection.");
                 
                 request.getSession().setAttribute("user", authenticatedUser);
                 
-                // Ceci est la redirection correcte vers la HomeServlet
+                // Redirection vers la HomeServlet (pattern Post-Redirect-Get)
                 response.sendRedirect(request.getContextPath() + "/home");
                 
             } else {
-                // Échec : L'API a renvoyé 401/403
-                System.out.println("DEBUG AUTH SERVLET: Échec de l'authentification.");
+                // Échec : Logique du Contrôleur : Définir l'erreur et afficher la vue de login
+                System.out.println("DEBUG AUTH SERVLET: Échec de l'authentification (Email/Mdp invalide).");
                 
                 request.setAttribute("errorMessage", "Email ou mot de passe invalide.");
                 request.setAttribute("email", email); 
-                doGet(request, response); // Réutilise doGet pour faire le forward vers la JSP avec l'erreur
+                doGet(request, response); 
             }
             
         } catch (Exception e) {
-            // Erreur de communication (API injoignable, JSON invalide, etc.)
+            // Erreur de communication ou autre erreur technique
             e.printStackTrace();
             request.setAttribute("errorMessage", "Une erreur interne est survenue lors de la communication.");
             request.setAttribute("email", email);

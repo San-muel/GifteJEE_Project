@@ -2,7 +2,6 @@ package be.project.DAO;
 
 import be.project.MODEL.Gift;
 
-import java.sql.Connection;
 import java.util.List; 
 
 public class GiftDAO extends DAO<Gift> {

@@ -113,3 +113,161 @@ li:hover {
     text-decoration: none;
     transform: translateY(-2px);
 }
+
+/* --- LISTE DE SOUHAITS SPÉCIFIQUE (Wishlist et Gifts) --- */
+
+.wishlist-list > li.wishlist-item {
+    background-color: #fcfcfc; /* Fond légèrement différent pour la wishlist parent */
+    border-left: 8px solid var(--color-primary);
+    padding: 20px;
+    margin-bottom: 25px;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05);
+}
+
+.wishlist-item h3 {
+    color: var(--color-primary);
+    margin-top: 0;
+    margin-bottom: 15px;
+    font-size: 1.4em;
+}
+
+.wishlist-item hr {
+    border: 0;
+    border-top: 1px dashed #DDD;
+    margin: 20px 0;
+}
+
+/* --- LISTE DES CADEAUX (Gift List) --- */
+
+.gift-list {
+    margin-top: 15px;
+    padding-left: 0;
+}
+
+.gift-item {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    background-color: white;
+    border: 1px solid #EEE;
+    border-left: 3px solid var(--color-secondary); /* Accent jaune pour les cadeaux */
+    padding: 10px 15px;
+    margin-bottom: 8px;
+    border-radius: 4px;
+    box-shadow: none; /* Supprime l'ombre de survol du li parent */
+}
+
+.gift-item:hover {
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
+}
+
+.gift-item p {
+    margin: 0;
+    flex-grow: 1; /* Permet au texte de prendre l'espace restant */
+}
+
+.gift-description {
+    font-size: 0.9em;
+    color: #777;
+    margin-top: 5px !important;
+    width: 100%; /* Prend toute la largeur si besoin */
+}
+
+/* --- FORMULAIRE D'AJOUT ET DE MODIFICATION (Gifts) --- */
+
+.gift-form, .modify-form form {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    align-items: flex-end;
+    background-color: #FAFAFA;
+    padding: 15px;
+    border: 1px solid #EEE;
+    border-radius: 6px;
+}
+
+.gift-form input[type="text"],
+.gift-form input[type="number"],
+.modify-form input[type="text"],
+.modify-form input[type="number"] {
+    flex: 1 1 150px; /* Taille flexible pour les champs */
+    padding: 8px 10px;
+    border: 1px solid #DDD;
+    border-radius: 4px;
+    box-sizing: border-box;
+    min-width: 120px;
+}
+
+.gift-form button, .modify-form button {
+    flex-grow: 0;
+    padding: 8px 15px;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-weight: 600;
+    transition: background-color 0.2s;
+}
+
+.gift-form button[type="submit"] {
+    background-color: var(--color-primary);
+    color: white;
+}
+
+.gift-form button[type="submit"]:hover {
+    background-color: #389B95;
+}
+
+/* --- ACTIONS SUR LES CADEAUX (Boutons Modifier/Supprimer) --- */
+
+.gift-actions {
+    flex-shrink: 0; /* Empêche les boutons de rétrécir */
+    margin-left: 15px;
+    display: flex;
+    gap: 5px;
+}
+
+.gift-actions button {
+    padding: 5px 10px;
+    font-size: 0.9em;
+    border-radius: 4px;
+    transition: opacity 0.2s;
+}
+
+.gift-actions button:first-child { /* Modifier */
+    background-color: #5BC0DE; /* Bleu info */
+    color: white;
+}
+
+.gift-actions button:last-child { /* Supprimer */
+    background-color: #F0AD4E; /* Orange alerte */
+    color: white;
+}
+
+.modify-form {
+    display: none; /* Géré par JS */
+    width: 100%;
+    margin-top: 10px;
+    padding: 15px;
+    border: 1px dashed var(--color-primary);
+    background-color: #E6F7F6; /* Fond très clair pour la modification */
+    border-radius: 6px;
+    box-sizing: border-box;
+}
+
+.modify-form h5 {
+    color: var(--color-primary);
+    margin-top: 0;
+    margin-bottom: 10px;
+    width: 100%;
+}
+
+.modify-form button[type="submit"] {
+    background-color: var(--color-primary);
+    color: white;
+}
+
+.modify-form button[type="button"] { /* Annuler */
+    background-color: #CCC;
+    color: var(--color-text);
+}
