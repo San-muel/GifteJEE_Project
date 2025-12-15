@@ -1,0 +1,115 @@
+@charset "UTF-8";
+/* Palette de couleurs
+   - Fond principal: Blanc cassé / Crème (#F9F9F9)
+   - Accent / Primaire (Cadeau/Fête): Or Doux (#FFD700) ou Turquoise Doux (#40B5AD) - J'opte pour le Turquoise
+   - Texte principal: Gris foncé (#333)
+   - Ombre : Gris clair (#CCC)
+*/
+
+:root {
+    --color-primary: #40B5AD; /* Turquoise doux */
+    --color-secondary: #FFD700; /* Or/Jaune (Accent) */
+    --color-background: #F9F9F9; /* Blanc cassé */
+    --color-text: #333333; /* Gris foncé */
+    --color-link: #1A73E8; /* Bleu standard */
+}
+
+/* --- GÉNÉRAL --- */
+
+body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background-color: var(--color-background);
+    color: var(--color-text);
+    margin: 0;
+    padding: 0;
+    line-height: 1.6;
+    display: flex;
+    justify-content: center;
+    min-height: 100vh;
+}
+
+.container {
+    background-color: white;
+    padding: 40px 50px;
+    margin: 40px 20px;
+    border-radius: 12px;
+    box-shadow: 0 6px 15px rgba(0, 0, 0, 0.1);
+    max-width: 900px;
+    width: 100%;
+}
+
+h1, h2 {
+    color: var(--color-primary);
+    border-bottom: 2px solid var(--color-secondary);
+    padding-bottom: 10px;
+    margin-top: 20px;
+}
+
+/* --- TYPOGRAPHIE ET LIENS --- */
+
+h1 {
+    font-size: 2.2em;
+    font-weight: 600;
+}
+
+h2 {
+    font-size: 1.6em;
+    color: var(--color-text);
+}
+
+a {
+    color: var(--color-link);
+    text-decoration: none;
+    transition: color 0.3s;
+}
+
+a:hover {
+    color: var(--color-primary);
+    text-decoration: underline;
+}
+
+/* --- LISTE DE SOUHAITS (Wishlist) --- */
+
+ul {
+    list-style: none;
+    padding: 0;
+}
+
+li {
+    background-color: white;
+    border: 1px solid #EEE;
+    border-left: 5px solid var(--color-primary);
+    padding: 15px;
+    margin-bottom: 10px;
+    border-radius: 6px;
+    transition: box-shadow 0.3s;
+}
+
+li:hover {
+    box-shadow: 0 4px 8px rgba(64, 181, 173, 0.2); /* Ombre avec la couleur primaire */
+}
+
+/* --- BOUTON DE DÉCONNEXION --- */
+
+.logout-container {
+    margin-top: 30px;
+    padding-top: 20px;
+    border-top: 1px dashed #DDD;
+    text-align: right;
+}
+
+.logout-container a {
+    display: inline-block;
+    padding: 10px 20px;
+    background-color: #F05454; /* Rouge doux pour la déconnexion */
+    color: white;
+    border-radius: 6px;
+    font-weight: bold;
+    transition: background-color 0.3s, transform 0.2s;
+}
+
+.logout-container a:hover {
+    background-color: #D32F2F;
+    text-decoration: none;
+    transform: translateY(-2px);
+}

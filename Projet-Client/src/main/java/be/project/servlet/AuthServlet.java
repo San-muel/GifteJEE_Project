@@ -57,8 +57,8 @@ public class AuthServlet extends HttpServlet {
                 
                 request.getSession().setAttribute("user", authenticatedUser);
                 
-                // Redirection (Redirection HTTP 302) vers une URL du Contrôleur
-                response.sendRedirect(request.getContextPath() + "/home"); 
+                // Ceci est la redirection correcte vers la HomeServlet
+                response.sendRedirect(request.getContextPath() + "/home");
                 
             } else {
                 // Échec : L'API a renvoyé 401/403

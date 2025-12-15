@@ -1,0 +1,90 @@
+@charset "UTF-8";
+/* --- FORMULAIRE D'AUTHENTIFICATION --- */
+
+.auth-container {
+    background-color: white;
+    padding: 50px;
+    margin: 100px 20px;
+    border-radius: 12px;
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
+    max-width: 450px;
+    width: 100%;
+    text-align: center;
+}
+
+.auth-container h1 {
+    color: var(--color-primary);
+    border-bottom: 3px solid var(--color-secondary);
+    margin-bottom: 30px;
+    display: inline-block;
+    padding-bottom: 5px;
+}
+
+/* --- CHAMPS DE FORMULAIRE --- */
+
+form div {
+    text-align: left;
+    margin-bottom: 15px;
+}
+
+label {
+    display: block;
+    margin-bottom: 5px;
+    font-weight: bold;
+    color: #555;
+}
+
+input[type="email"],
+input[type="password"] {
+    width: 100%;
+    padding: 12px;
+    border: 1px solid #DDD;
+    border-radius: 6px;
+    box-sizing: border-box; /* Inclut le padding dans la largeur totale */
+    transition: border-color 0.3s, box-shadow 0.3s;
+}
+
+input:focus {
+    border-color: var(--color-primary);
+    box-shadow: 0 0 5px rgba(64, 181, 173, 0.5);
+    outline: none;
+}
+
+/* --- BOUTON DE SOUMISSION --- */
+
+button[type="submit"] {
+    width: 100%;
+    padding: 15px;
+    background-color: var(--color-primary);
+    color: white;
+    border: none;
+    border-radius: 6px;
+    font-size: 1.1em;
+    font-weight: bold;
+    cursor: pointer;
+    margin-top: 20px;
+    transition: background-color 0.3s, transform 0.2s;
+}
+
+button[type="submit"]:hover {
+    background-color: #389B95; /* Légèrement plus foncé */
+    transform: translateY(-1px);
+}
+
+/* --- MESSAGES D'ERREUR --- */
+
+p[style*="color: red"] {
+    background-color: #FFEEEE;
+    border: 1px solid #F05454;
+    padding: 10px;
+    border-radius: 6px;
+    margin-bottom: 20px;
+    color: #D32F2F !important;
+}
+
+/* --- LIEN D'INSCRIPTION --- */
+
+.auth-container p:last-child {
+    margin-top: 25px;
+    color: #777;
+}

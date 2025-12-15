@@ -1,7 +1,9 @@
 package be.project.DAO;
 
 import be.project.MODEL.User;
-import org.json.JSONObject;
+// Importation de Jackson pour la désérialisation
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule; // Pour LocalDate
 
 import java.net.URI;
 import java.net.http.HttpClient;
@@ -9,91 +11,80 @@ import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.util.List;
 
+// On garde org.json pour construire la requête, car c'est simple,
+// mais on utilise Jackson pour le corps de la réponse complexe.
+import org.json.JSONObject; 
+
 public class UserDAO extends DAO<User> {
 
     private final HttpClient client = HttpClient.newHttpClient();
+    private final ObjectMapper objectMapper; // Déclaration de l'ObjectMapper
 
     public UserDAO() {
         super();
+        this.objectMapper = new ObjectMapper();
+        // IMPORTANT : Le Client a BESOIN de la même configuration de date que l'API pour lire.
+        this.objectMapper.registerModule(new JavaTimeModule()); 
+        // Note: Désactiver la fonction si elle ne trouve pas toutes les propriétés JSON pour être plus tolérant
+        // this.objectMapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
     }
     
-    // Méthode d'aide pour la désérialisation manuelle
-    private User buildUser(JSONObject jsonResponse) {
-        User user = new User();
-        
-        // Champs obligatoires
-        user.setId(jsonResponse.getInt("id"));
-        user.setEmail(jsonResponse.getString("email"));
-        
-        // Récupération du TOKEN JWT
-        if (!jsonResponse.isNull("token")) {
-            user.setToken(jsonResponse.getString("token"));
-        }
-        
-        // Autres champs (nom d'utilisateur)
-        if (!jsonResponse.isNull("username")) {
-            user.setUsername(jsonResponse.getString("username"));
-        }
-        
-        // NOTE: Les champs complexes (Wishlist, Contribution) ne sont pas hydratés ici.
-        return user;
-    }
+    // Suppression de la méthode buildUser, on utilise Jackson
 
     /**
-     * Authentification RESTful : envoie email/psw, reçoit User+Token.
+     * Authentification RESTful : envoie email/psw, reçoit User+Token (COMPLET).
      * @param email Email de l'utilisateur.
      * @param psw Mot de passe de l'utilisateur.
-     * @return L'objet User avec le token s'il est authentifié, sinon null.
+     * @return L'objet User HYDRATÉ (complet) avec le token s'il est authentifié, sinon null.
      */
     public User authenticate(String email, String psw) {
-        // Assurez-vous que ConfigLoad existe et contient API_BASE_URL
         String baseUrl = ConfigLoad.API_BASE_URL;
-        if (baseUrl == null || baseUrl.isEmpty()) {
-             System.err.println("ERREUR DAO: L'URL de base de l'API est vide.");
-             return null;
-        }
+        // ... (Vérifications de baseUrl inchangées) ...
         if (baseUrl.endsWith("/")) {
             baseUrl = baseUrl.substring(0, baseUrl.length() - 1);
         }
-        String url = baseUrl + "/auth/login"; // Endpoint RESTful d'authentification
+        String url = baseUrl + "/auth/login";
 
         try {
-            // Création du corps de la requête JSON (utilisation de "psw" comme dans votre modèle)
+            // Création du corps de la requête JSON (inchangé)
             JSONObject jsonBody = new JSONObject();
             jsonBody.put("email", email);
             jsonBody.put("psw", psw); 
 
             HttpRequest request = HttpRequest.newBuilder()
                     .uri(URI.create(url))
-                    .header("Content-Type", "application/json") // Nous envoyons du JSON
-                    .header("Accept", "application/json")       // Nous attendons du JSON
+                    .header("Content-Type", "application/json")
+                    .header("Accept", "application/json")
                     .POST(HttpRequest.BodyPublishers.ofString(jsonBody.toString()))
                     .build();
 
             HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
+            String responseBody = response.body();
 
             if (response.statusCode() == 200) {
-                // Succès : Désérialisation manuelle du JSON
-                JSONObject jsonResponse = new JSONObject(response.body());
-                return buildUser(jsonResponse);
+                // Succès : Désérialisation FACILE et COMPLÈTE via Jackson
+                
+                // C'est l'étape qui va mapper TOUS les champs (y compris Wishlists)
+                User user = objectMapper.readValue(responseBody, User.class);
+                return user;
 
             } else if (response.statusCode() == 401 || response.statusCode() == 403) {
                 System.out.println("DEBUG AUTH DAO: Échec de l'authentification (identifiants invalides).");
                 return null;
             } else {
                 System.err.println("ERREUR AUTH DAO: Erreur HTTP inattendue : " + response.statusCode());
+                System.err.println("Corps de la réponse : " + responseBody);
                 return null;
             }
 
         } catch (Exception e) {
-            System.err.println("ERREUR AUTH DAO: Échec de la communication ou du traitement JSON.");
+            System.err.println("ERREUR AUTH DAO: Échec de la communication ou du traitement Jackson.");
             e.printStackTrace();
             return null;
         }
     }
-    
-    // --- Implémentations des méthodes abstraites ---
-
+   
+   
 	@Override
 	public boolean create(User obj) {
 		// TODO Auto-generated method stub
