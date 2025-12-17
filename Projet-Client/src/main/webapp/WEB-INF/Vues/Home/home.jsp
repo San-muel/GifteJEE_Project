@@ -3,122 +3,161 @@
 <jsp:useBean id="user" scope="session" type="be.project.MODEL.User" class="be.project.MODEL.User" />
 
 <!DOCTYPE html>
-<html>
+<html lang="fr">
 <head>
-<meta charset="UTF-8">
-<title>Page d'Accueil</title>
-<link rel="stylesheet" href="${pageContext.request.contextPath}/CSS/main.css">
+    <meta charset="UTF-8">
+    <title>Mon Espace Cadeaux</title>
+    <link rel="stylesheet" href="${pageContext.request.contextPath}/CSS/main.css">
 </head>
 <body>
 
     <div class="container">
-        <h1>Bienvenue, <c:out value="${user.username}" /> !</h1>
+        <header>
+            <h1>Bienvenue, <c:out value="${user.username}" /> !</h1>
+            <p>Votre tableau de bord personnel : <strong><c:out value="${user.email}" /></strong></p>
+        </header>
         
-        <p>Votre email : <c:out value="${user.email}" /></p>
-        
-        <h2>Vos Wishlists Créées</h2>
-    	
-        <c:choose>
-            <c:when test="${not empty user.createdWishlists}">
-                <ul class="wishlist-list">
-        			<c:forEach var="wl" items="${user.createdWishlists}">  
-        	            <li class="wishlist-item">
-                            <h3>
-                                **<c:out value="${wl.title}" />** (Occasion: <c:out value="${wl.occasion}" /> | 
-                                Expire: <c:out value="${wl.expirationDate}" /> |
-                                Statut: <c:out value="${wl.status}" />)
-                            </h3>
+        <section>
+            <h2>Mes Listes de Souhaits</h2>
+            <c:choose>
+                <c:when test="${not empty user.createdWishlists}">
+                    <ul class="wishlist-list">
+                        <c:forEach var="wl" items="${user.createdWishlists}">  
+                            <li class="wishlist-item">
+                                <div class="wishlist-header">
+                                    <h3>
+                                        <c:out value="${wl.title}" /> 
+                                        <span class="badge"><c:out value="${wl.occasion}" /></span>
+                                    </h3>
+                                    <p class="wishlist-meta">
+                                        Fin : <c:out value="${wl.expirationDate}" /> | Statut : <strong><c:out value="${wl.status}" /></strong>
+                                    </p>
+                                </div>
 
-                            <h4>➕ Ajouter un nouveau cadeau</h4>
-                            <form action="${pageContext.request.contextPath}/gift/add" method="POST" class="gift-form">
-                                <input type="hidden" name="wishlistId" value="<c:out value="${wl.id}" />">
+									<div class="add-gift-box">
+									    <h4>➕ Ajouter un nouveau cadeau</h4>
+									    <form action="${pageContext.request.contextPath}/gift/add" method="POST" class="gift-form">
+									        <input type="hidden" name="wishlistId" value="${wl.id}">
+									        <input type="text" name="name" placeholder="Nom" required>
+									        <input type="number" name="price" placeholder="Prix (€)" step="0.01" min="0" required>
+									        <input type="text" name="description" placeholder="Description">
+									        <input type="text" name="photoUrl" placeholder="URL de l'image (ex: http://...)">
+									        <input type="number" name="priority" placeholder="Prio (1-10)" min="1" max="10">
+									        <button type="submit">Ajouter</button>
+									    </form>
+									</div>
                                 
-                                <input type="text" name="name" placeholder="Nom du cadeau" required>
-                                <input type="number" name="price" placeholder="Prix (€)" step="0.01" min="0" required>
-                                <input type="text" name="description" placeholder="Description (optionnel)">
-                                <input type="number" name="priority" placeholder="Priorité (1-10)" min="1" max="10">
-                                <input type="text" name="photoUrl" placeholder="URL Photo (optionnel)">
-                                
-                                <button type="submit">Ajouter le Cadeau</button>
-                            </form>
-                            
-                            <hr>
+                                <hr>
 
-                            <c:choose>
-                                <c:when test="${not empty wl.gifts}">
-                                    <h4>🎁 Cadeaux de cette liste :</h4>
-                                    <ul class="gift-list">
-                                        <c:forEach var="gift" items="${wl.gifts}">
-                                            <li class="gift-item" id="gift-<c:out value="${gift.id}" />">
-                                                
-                                                <p>
-                                                    **<c:out value="${gift.name}" />** (<c:out value="${gift.price}" />€)
-                                                    <c:if test="${not empty gift.priority}">
-                                                        [P: <c:out value="${gift.priority}" />]
-                                                    </c:if>
-                                                    - Description: <c:out value="${gift.description}" />
-                                                </p>
-                                                
-                                                <div class="gift-actions">
-                                                    <button onclick="toggleModifyForm(<c:out value="${gift.id}" />)">Modifier</button>
+                                <c:choose>
+                                    <c:when test="${not empty wl.gifts}">
+                                        <h4>🎁 Cadeaux de cette liste :</h4>
+                                        <ul class="gift-list">
+                                            <c:forEach var="gift" items="${wl.gifts}">
+                                                <li class="gift-item">
+												<div class="gift-info">
+												    <c:if test="${not empty gift.photoUrl}">
+												        <img src="${gift.photoUrl}" alt="${gift.name}" style="width:100px; height:auto; border-radius:8px; margin-bottom:10px; display:block;">
+												    </c:if>
+												
+												    <strong><c:out value="${gift.name}" /></strong> 
+												    (<c:out value="${gift.price}" />€)
+												    </div>
                                                     
-                                                    <form action="${pageContext.request.contextPath}/gift/delete" method="POST" style="display:inline;">
-                                                        <input type="hidden" name="giftId" value="<c:out value="${gift.id}" />">
-                                                        <input type="hidden" name="wishlistId" value="<c:out value="${wl.id}" />">
-                                                        <button type="submit" onclick="return confirm('Êtes-vous sûr de vouloir supprimer ce cadeau ?')">Supprimer</button>
-                                                    </form>
-                                                </div>
+                                                    <div class="gift-actions">
+                                                        <button class="btn-edit" onclick="toggleModifyForm(${gift.id})">Modifier</button>
+                                                        <form action="${pageContext.request.contextPath}/gift/delete" method="POST" style="display:inline;">
+                                                            <input type="hidden" name="giftId" value="${gift.id}">
+                                                            <input type="hidden" name="wishlistId" value="${wl.id}">
+                                                            <button type="submit" class="btn-delete" onclick="return confirm('Supprimer ce cadeau ?')">Supprimer</button>
+                                                        </form>
+                                                    </div>
+													<div id="modify-form-${gift.id}" class="modify-form">
+													    <h5>Modification de ${gift.name}</h5>
+													    <form action="${pageContext.request.contextPath}/gift/update" method="POST">
+													        <input type="hidden" name="giftId" value="${gift.id}">
+													        <input type="hidden" name="wishlistId" value="${wl.id}">
+													        
+													        <input type="text" name="name" value="${gift.name}" placeholder="Nom" required>
+													        <input type="number" name="price" value="${gift.price}" step="0.01" placeholder="Prix">
+													        <input type="text" name="description" value="${gift.description}" placeholder="Description">
+													        
+													        <input type="text" name="photoUrl" value="${gift.photoUrl}" placeholder="URL de l'image">
+													        
+													        <button type="submit">Enregistrer</button>
+													        <button type="button" onclick="toggleModifyForm(${gift.id})">Annuler</button>
+													    </form>
+													</div>
+                                                </li>
+                                            </c:forEach>
+                                        </ul>
+                                    </c:when>
+                                    <c:otherwise>
+                                        <p class="empty-msg">Aucun cadeau pour le moment.</p>
+                                    </c:otherwise>
+                                </c:choose>
+                            </li>
+                        </c:forEach>
+                    </ul>
+                </c:when>
+                <c:otherwise>
+                    <p class="info-card">Vous n'avez pas encore de liste. <a href="#">Créez-en une !</a></p>
+                </c:otherwise>
+            </c:choose>
+        </section>
 
-                                                <div id="modify-form-<c:out value="${gift.id}" />" class="modify-form">
-                                                    <h5>Modification de <c:out value="${gift.name}" /></h5>
-                                                    <form action="${pageContext.request.contextPath}/gift/update" method="POST">
-                                                        <input type="hidden" name="giftId" value="<c:out value="${gift.id}" />">
-                                                        <input type="hidden" name="wishlistId" value="<c:out value="${wl.id}" />">
-                                                        
-                                                        <input type="text" name="name" value="<c:out value="${gift.name}" />" required>
-                                                        <input type="number" name="price" value="<c:out value="${gift.price}" />" step="0.01" min="0" required>
-                                                        <input type="text" name="description" value="<c:out value="${gift.description}" />" placeholder="Description (optionnel)">
-                                                        <input type="number" name="priority" value="<c:out value="${gift.priority}" />" placeholder="Priorité (1-10)" min="1" max="10">
-                                                        <input type="text" name="photoUrl" value="<c:out value="${gift.photoUrl}" />" placeholder="URL Photo (optionnel)">
+        <section class="shared-section">
+            <h2>Listes partagées avec moi</h2>
+            <c:choose>
+                <c:when test="${not empty user.sharedWishlists}">
+                    <ul class="wishlist-list shared">
+                        <c:forEach var="wl" items="${user.sharedWishlists}">
+                            <li class="wishlist-item shared-item">
+                                <div class="shared-header">
+                                    <h3>🌟 <c:out value="${wl.title}" /></h3>
+                                    
+                                    <c:forEach var="info" items="${user.sharedWishlistInfos}">
+                                        <c:if test="${info.id == wl.id}">
+                                            <div class="shared-meta-box">
+                                                <p>📅 Partagé le : <c:out value="${info.sharedAt}" /></p>
+                                                <p>💬 <em>"<c:out value="${info.notification}" />"</em></p>
+                                            </div>
+                                        </c:if>
+                                    </c:forEach>
+                                </div>
 
-                                                        <button type="submit">Enregistrer les modifications</button>
-                                                        <button type="button" onclick="toggleModifyForm(<c:out value="${gift.id}" />)">Annuler</button>
-                                                    </form>
-                                                </div>
-                                            </li>
-                                        </c:forEach>
-                                    </ul>
-                                </c:when>
-                                <c:otherwise>
-                                    <p>Cette liste ne contient aucun cadeau pour le moment.</p>
-                                </c:otherwise>
-                            </c:choose>
-                        </li>
-        		    </c:forEach>
-        	    </ul>
-            </c:when>
-            <c:otherwise>
-                <p>Vous n'avez pas encore créé de liste de souhaits. <a href="#">Commencez maintenant !</a></p>
-            </c:otherwise>
-        </c:choose>
-        
+                                <c:choose>
+                                    <c:when test="${not empty wl.gifts}">
+                                        <ul class="gift-list">
+                                            <c:forEach var="gift" items="${wl.gifts}">
+                                                <li class="gift-item shared-gift">
+                                                    <p><strong><c:out value="${gift.name}" /></strong> - <c:out value="${gift.price}" />€</p>
+                                                    <button class="btn-contribute">Contribuer</button>
+                                                </li>
+                                            </c:forEach>
+                                        </ul>
+                                    </c:when>
+                                </c:choose>
+                            </li>
+                        </c:forEach>
+                    </ul>
+                </c:when>
+                <c:otherwise>
+                    <p class="empty-msg">Aucune liste partagée pour le moment.</p>
+                </c:otherwise>
+            </c:choose>
+        </section>
+
         <div class="logout-container">
             <a href="${pageContext.request.contextPath}/logout">Se Déconnecter</a>
         </div>
     </div>
-    
+
     <script>
         function toggleModifyForm(giftId) {
-            const formId = 'modify-form-' + giftId;
-            const form = document.getElementById(formId);
-            
+            const form = document.getElementById('modify-form-' + giftId);
             if (form) {
-                // Bascule l'affichage entre 'none' et 'block'
-                if (form.style.display === 'block') {
-                    form.style.display = 'none';
-                } else {
-                    form.style.display = 'block';
-                }
+                form.style.display = (form.style.display === 'block') ? 'none' : 'block';
             }
         }
     </script>

@@ -271,3 +271,67 @@ li:hover {
     background-color: #CCC;
     color: var(--color-text);
 }
+
+/* --- COMPLÉMENTS SHARED WISHLIST --- */
+
+.shared-item {
+    border-left: 8px solid var(--color-secondary) !important; /* Couleur Or pour le partage */
+    background-color: #FFFDF0 !important;
+}
+
+.shared-meta-box {
+    background: #fdfdfd;
+    border: 1px solid #eee;
+    padding: 10px;
+    border-radius: 8px;
+    font-size: 0.85em;
+    margin: 10px 0;
+}
+
+.badge {
+    background-color: var(--color-primary);
+    color: white;
+    font-size: 0.6em;
+    padding: 3px 8px;
+    border-radius: 20px;
+    vertical-align: middle;
+    margin-left: 10px;
+}
+
+.btn-contribute {
+    background-color: var(--color-primary);
+    color: white;
+    border: none;
+    padding: 6px 12px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-weight: bold;
+}
+
+.btn-contribute:hover {
+    background-color: #389B95;
+}
+
+.prio-tag {
+    background: #eee;
+    font-size: 0.7em;
+    padding: 2px 5px;
+    border-radius: 3px;
+    font-weight: bold;
+}
+
+.empty-msg {
+    color: #999;
+    font-style: italic;
+    padding: 10px;
+}
+
+.shared-gift {
+    border-left: 3px solid var(--color-primary) !important;
+}
+.gift-item img {
+    max-width: 120px;
+    object-fit: cover;
+    border: 1px solid #ddd;
+    box-shadow: 2px 2px 5px rgba(0,0,0,0.1);
+}

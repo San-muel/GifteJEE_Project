@@ -40,4 +40,13 @@ public class UserService {
         
         return authenticatedUser;
     }
+    public boolean register(User user) {
+        // Logique métier : par exemple, vérifier que l'email n'est pas vide
+        if (user.getEmail() == null || user.getEmail().isEmpty()) {
+            return false;
+        }
+        
+        // Appel au DAO pour la persistance REST
+        return userDAO.create(user);
+    }
 }

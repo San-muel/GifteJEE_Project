@@ -37,7 +37,7 @@
             <button type="submit">Se connecter</button>
         </form>
         
-        <p>Pas encore de compte ? <a href="#">S'inscrire</a></p>
+        <p>Pas encore de compte ? <a href="${pageContext.request.contextPath}/register">S'inscrire</a></p>
     </div>
 </body>
 </html>

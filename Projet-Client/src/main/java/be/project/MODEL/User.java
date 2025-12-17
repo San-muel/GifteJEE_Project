@@ -52,17 +52,6 @@ public class User implements Serializable {
     public void setCreatedWishlists(Set<Wishlist> createdWishlists) {
         this.WishlistCreer = createdWishlists;
     }
-    
-    /**
-     * Ancien Getter (Laisser pour la compatibilité si le DAO API le demande, 
-     * mais il est préférable de migrer le DAO vers getCreatedWishlists)
-     */
-    public Set<Wishlist> getWishlistCreer() {
-        return WishlistCreer;
-    }
-    public void setWishlistCreer(Set<Wishlist> WishlistCreer) {
-        this.WishlistCreer = WishlistCreer;
-    }
 
     /**
      * Getter correct, utilisé par EL: ${user.sharedWishlists}
@@ -74,16 +63,6 @@ public class User implements Serializable {
 
     public void setSharedWishlists(Set<Wishlist> sharedWishlists) {
         this.WishlistPartager = sharedWishlists;
-    }
-
-    /**
-     * Ancien Getter (Laisser pour la compatibilité)
-     */
-    public Set<Wishlist> getWishlistPartager() {
-        return WishlistPartager;
-    }
-    public void setWishlistPartager(Set<Wishlist> WishlistPartager) {
-        this.WishlistPartager = WishlistPartager;
     }
 
     /**
