@@ -11,10 +11,11 @@ import javax.servlet.annotation.WebServlet;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import javax.servlet.http.HttpSession;
 
 @WebServlet("/gift/*") 
 public class GiftServlet extends HttpServlet {
-	private static final long serialVersionUID = 1L;
+    private static final long serialVersionUID = 1L;
     
     private final GiftService giftService = new GiftService();
 
@@ -22,64 +23,50 @@ public class GiftServlet extends HttpServlet {
         super();
     }
 
-	protected void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
-		response.getWriter().append("Served at: ").append(request.getContextPath());
-	}
+    protected void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
+        response.sendRedirect(request.getContextPath() + "/home");
+    }
 
-	protected void doPost(HttpServletRequest request, HttpServletResponse response) 
+    protected void doPost(HttpServletRequest request, HttpServletResponse response) 
             throws ServletException, IOException {
         
-	    String path = request.getPathInfo(); 
-        User user = (User) request.getSession().getAttribute("user");
+        String path = request.getPathInfo(); 
+        HttpSession session = request.getSession();
+        User user = (User) session.getAttribute("user");
 
-        // 1. Vérification de l'authentification
         if (user == null) {
-             response.sendError(HttpServletResponse.SC_FORBIDDEN, "Vous devez être connecté pour effectuer cette action.");
+             response.sendError(HttpServletResponse.SC_FORBIDDEN, "Vous devez être connecté.");
              return;
         }
         
-        // Normalisation du chemin si le développeur utilise /update ou /modify indifféremment
-        if ("/update".equals(path)) {
-            path = "/modify";
-        }
+        if ("/update".equals(path)) path = "/modify";
 
-	    if ("/add".equals(path)) {
+        if ("/add".equals(path)) {
             handleAddGift(request, response, user);
-	    } else if ("/modify".equals(path)) { 
+        } else if ("/modify".equals(path)) { 
             handleModifyGift(request, response, user);
-        } else if ("/delete".equals(path)) { // AJOUT de la suppression
+        } else if ("/delete".equals(path)) {
             handleDeleteGift(request, response, user);
         } else {
-            // Cette erreur était la cause du 404/Action non reconnue
             response.sendError(HttpServletResponse.SC_NOT_FOUND, "Action non reconnue.");
         }
-	}
+    }
     
     /**
-     * Logique de création d'un cadeau (POST /gift/add).
+     * AJOUT : Crée le cadeau et l'ajoute à l'objet User en session.
      */
     private void handleAddGift(HttpServletRequest request, HttpServletResponse response, User user) 
             throws ServletException, IOException {
 
-        // --- 1. Récupérer et valider les paramètres ---
-        String name = request.getParameter("name");
-        String description = request.getParameter("description");
-        String priceStr = request.getParameter("price");
-        String priorityStr = request.getParameter("priority");
-        String photoUrl = request.getParameter("photoUrl");
-        String wishlistIdStr = request.getParameter("wishlistId"); 
-
-        if (name == null || name.isEmpty() || priceStr == null || priceStr.isEmpty() || wishlistIdStr == null) {
-            response.sendRedirect(request.getContextPath() + "/home?error=invalid_fields"); 
-            return;
-        }
-
         try {
-            double price = Double.parseDouble(priceStr);
-            int wishlistId = Integer.parseInt(wishlistIdStr);
+            String name = request.getParameter("name");
+            String description = request.getParameter("description");
+            double price = Double.parseDouble(request.getParameter("price"));
+            int wishlistId = Integer.parseInt(request.getParameter("wishlistId"));
+            String priorityStr = request.getParameter("priority");
             Integer priority = (priorityStr != null && !priorityStr.isEmpty()) ? Integer.parseInt(priorityStr) : null;
+            String photoUrl = request.getParameter("photoUrl");
 
-            // --- 2. Créer l'objet Gift (Modèle) ---
             Gift newGift = new Gift();
             newGift.setName(name);
             newGift.setDescription(description);
@@ -91,61 +78,43 @@ public class GiftServlet extends HttpServlet {
             associatedWishlist.setId(wishlistId); 
             newGift.setwishlist(associatedWishlist); 
 
-            // --- 3. Appeler le Service (Logique métier/DAO) ---
             Optional<Gift> createdGift = giftService.addGift(newGift, user);
             
             if (createdGift.isPresent()) {
+                // MISE À JOUR SESSION : Ajouter le cadeau à la bonne wishlist locale
+                for (Wishlist w : user.getCreatedWishlists()) { // Vérifiez si c'est getWishlists() ou getwishlists()
+                    if (w.getId() == wishlistId) {
+                        w.getGifts().add(createdGift.get());
+                        break;
+                    }
+                }
                 response.sendRedirect(request.getContextPath() + "/home?status=gift_added");
             } else {
                 response.sendRedirect(request.getContextPath() + "/home?error=gift_failed"); 
             }
-
-        } catch (NumberFormatException e) {
-            response.sendRedirect(request.getContextPath() + "/home?error=number_format"); 
         } catch (Exception e) {
-            e.printStackTrace();
-            response.sendRedirect(request.getContextPath() + "/home?error=unknown");
+            response.sendRedirect(request.getContextPath() + "/home?error=invalid_data");
         }
     }
     
     /**
-     * Logique de modification d'un cadeau (POST /gift/modify ou /gift/update).
-     * RAPPEL: L'ID du cadeau est obligatoire ici.
+     * MODIFICATION : Modifie le cadeau sur l'API et met à jour l'objet User en session.
      */
     private void handleModifyGift(HttpServletRequest request, HttpServletResponse response, User user) 
             throws ServletException, IOException {
 
-        // --- 1. Récupérer et valider les paramètres (y compris l'ID) ---
-        String idStr = request.getParameter("giftId"); // L'ID du cadeau est obligatoire
-        String name = request.getParameter("name");
-        String description = request.getParameter("description");
-        String priceStr = request.getParameter("price");
-        String priorityStr = request.getParameter("priority");
-        String photoUrl = request.getParameter("photoUrl");
-        String wishlistIdStr = request.getParameter("wishlistId"); 
-
-        if (idStr == null || idStr.isEmpty() || name == null || name.isEmpty() || priceStr == null || priceStr.isEmpty() || wishlistIdStr == null) {
-            response.sendRedirect(request.getContextPath() + "/home?error=invalid_modify_fields"); 
-            return;
-        }
-
         try {
-        	int giftId = Integer.parseInt(idStr);
-            double price = Double.parseDouble(priceStr);
-            int wishlistId = Integer.parseInt(wishlistIdStr);
+            int giftId = Integer.parseInt(request.getParameter("giftId"));
+            String name = request.getParameter("name");
+            String description = request.getParameter("description");
+            double price = Double.parseDouble(request.getParameter("price"));
+            int wishlistId = Integer.parseInt(request.getParameter("wishlistId"));
+            String priorityStr = request.getParameter("priority");
             Integer priority = (priorityStr != null && !priorityStr.isEmpty()) ? Integer.parseInt(priorityStr) : null;
+            String photoUrl = request.getParameter("photoUrl");
 
-            // 🚨 AJOUT DES LOGS DE DÉBOGAGE ICI 🚨
-            System.out.println("SERVLET DEBUG: TENTATIVE DE MODIFICATION DE CADEAU");
-            System.out.println("SERVLET DEBUG: Paramètre lu - giftId (ID Cadeau): " + idStr + " (int: " + giftId + ")");
-            System.out.println("SERVLET DEBUG: Paramètre lu - wishlistId (ID Liste): " + wishlistIdStr + " (int: " + wishlistId + ")");
-            System.out.println("SERVLET DEBUG: Paramètre lu - name: " + name);
-            System.out.println("SERVLET DEBUG: Utilisateur en session - ID: " + user.getId());
-            // ------------------------------------
-            
-            // --- 2. Créer l'objet Gift (Modèle) à modifier ---
             Gift modifiedGift = new Gift();
-            modifiedGift.setId(giftId); // ESSENTIEL
+            modifiedGift.setId(giftId);
             modifiedGift.setName(name);
             modifiedGift.setDescription(description);
             modifiedGift.setPrice(price);
@@ -156,58 +125,54 @@ public class GiftServlet extends HttpServlet {
             associatedWishlist.setId(wishlistId); 
             modifiedGift.setwishlist(associatedWishlist); 
 
-            // --- 3. Appeler le Service (Logique métier/DAO) ---
             boolean success = giftService.modifyGift(modifiedGift, user);
             
             if (success) {
+                // MISE À JOUR SESSION : Modifier les valeurs du cadeau localement
+                for (Wishlist w : user.getCreatedWishlists()) {
+                    if (w.getId() == wishlistId) {
+                        for (Gift g : w.getGifts()) {
+                            if (g.getId() == giftId) {
+                                g.setName(name);
+                                g.setDescription(description);
+                                g.setPrice(price);
+                                g.setPriority(priority);
+                                g.setPhotoUrl(photoUrl);
+                                break;
+                            }
+                        }
+                    }
+                }
                 response.sendRedirect(request.getContextPath() + "/home?status=gift_modified");
             } else {
                 response.sendRedirect(request.getContextPath() + "/home?error=gift_modify_failed"); 
             }
-
-        } catch (NumberFormatException e) {
-            response.sendRedirect(request.getContextPath() + "/home?error=modify_number_format"); 
         } catch (Exception e) {
-            e.printStackTrace();
-            response.sendRedirect(request.getContextPath() + "/home?error=modify_unknown");
+            response.sendRedirect(request.getContextPath() + "/home?error=modify_error");
         }
     }
     
     /**
-     * Logique de suppression d'un cadeau (POST /gift/delete).
+     * SUPPRESSION : Supprime sur l'API et retire le cadeau de l'objet User en session.
      */
     private void handleDeleteGift(HttpServletRequest request, HttpServletResponse response, User user) 
             throws ServletException, IOException {
         
-        // --- 1. Récupérer l'ID du cadeau à supprimer ---
-        String idStr = request.getParameter("giftId"); 
-
-        if (idStr == null || idStr.isEmpty()) {
-            response.sendRedirect(request.getContextPath() + "/home?error=delete_id_missing");
-            return;
-        }
-        
         try {
-            int giftId = Integer.parseInt(idStr);
-            
-            // --- 2. Appeler le Service (Logique métier/DAO) ---
-            System.out.println("SERVLET DEBUG: Tentative de suppression du cadeau ID: " + giftId);
-            boolean success = giftService.deleteGift(giftId, user); // <-- Appel au service
+            int giftId = Integer.parseInt(request.getParameter("giftId"));
+            boolean success = giftService.deleteGift(giftId, user);
             
             if (success) {
-                System.out.println("SERVLET DEBUG: Suppression réussie. Redirection.");
+                // MISE À JOUR SESSION : Retirer le cadeau de la liste locale
+                for (Wishlist w : user.getCreatedWishlists()) {
+                    w.getGifts().removeIf(g -> g.getId() == giftId);
+                }
                 response.sendRedirect(request.getContextPath() + "/home?status=gift_deleted");
             } else {
-                System.out.println("SERVLET DEBUG: Suppression échouée.");
                 response.sendRedirect(request.getContextPath() + "/home?error=gift_delete_failed"); 
             }
-            
-        } catch (NumberFormatException e) {
-            response.sendRedirect(request.getContextPath() + "/home?error=delete_invalid_id"); 
         } catch (Exception e) {
-            e.printStackTrace();
-            response.sendRedirect(request.getContextPath() + "/home?error=delete_unknown");
+            response.sendRedirect(request.getContextPath() + "/home?error=delete_error");
         }
     }
-    
 }
