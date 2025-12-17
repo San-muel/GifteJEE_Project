@@ -6,10 +6,10 @@
         <welcome-file>auth</welcome-file> 
     </welcome-file-list>
 
-  <context-param>
+<context-param>
     <param-name>apiBaseUrl</param-name>
-    <param-value>http://localhost:8080/Projet-API/api/</param-value>
-  </context-param>
+    <param-value>http://localhost:11265/Projet-API/api/</param-value>
+</context-param>
   
   <welcome-file-list>
     <welcome-file>index.html</welcome-file>
