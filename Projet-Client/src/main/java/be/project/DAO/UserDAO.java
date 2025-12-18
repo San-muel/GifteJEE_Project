@@ -10,7 +10,9 @@ import java.nio.charset.StandardCharsets;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 public class UserDAO extends DAO<User> {
 
@@ -43,11 +45,8 @@ public class UserDAO extends DAO<User> {
                     + "?email=" + URLEncoder.encode(email, StandardCharsets.UTF_8)
                     + "&psw=" + URLEncoder.encode(psw, StandardCharsets.UTF_8);
 
-            // --- DEBUG LOG ---
             System.out.println("\n[DAO CLIENT - AUTHENTICATE]");
             System.out.println(">> URL d'appel : " + url);
-            System.out.println(">> Méthode     : GET");
-            // ------------------
 
             HttpRequest request = HttpRequest.newBuilder()
                     .uri(URI.create(url))
@@ -56,7 +55,6 @@ public class UserDAO extends DAO<User> {
                     .build();
 
             HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
-
             System.out.println("<< Réponse API : Status " + response.statusCode());
 
             if (response.statusCode() == 200) {
@@ -74,19 +72,27 @@ public class UserDAO extends DAO<User> {
 
     /**
      * Inscription RESTful : POST /users
+     * Utilise une Map pour envoyer uniquement les données nécessaires (Username, Email, Psw)
      */
     @Override
     public boolean create(User newUser) {
         try {
             String url = getCleanBaseUrl() + "/users"; 
-            String jsonBody = objectMapper.writeValueAsString(newUser);
+
+            // --- MAPPING MANUEL ---
+            // On ne met que les 3 champs indispensables pour éviter l'erreur "Unrecognized field contributions"
+            Map<String, Object> registerData = new HashMap<>();
+            registerData.put("username", newUser.getUsername());
+            registerData.put("email", newUser.getEmail());
+            registerData.put("psw", newUser.getPsw());
+
+            // On génère le JSON à partir de la Map filtrée
+            String jsonBody = objectMapper.writeValueAsString(registerData);
 
             // --- DEBUG LOG ---
             System.out.println("\n[DAO CLIENT - CREATE]");
             System.out.println(">> URL d'appel : " + url);
-            System.out.println(">> Méthode     : POST");
-            System.out.println(">> Corps JSON  : " + jsonBody);
-            // ------------------
+            System.out.println(">> Corps JSON (FILTRÉ) : " + jsonBody);
 
             HttpRequest request = HttpRequest.newBuilder()
                     .uri(URI.create(url))
@@ -100,10 +106,11 @@ public class UserDAO extends DAO<User> {
             System.out.println("<< Réponse API : Status " + response.statusCode());
             
             if (response.statusCode() != 201 && response.statusCode() != 200) {
-                System.err.println("<< Détails Erreur : " + response.body());
+                System.err.println("<< Détails Erreur API : " + response.body());
+                return false;
             }
 
-            return (response.statusCode() == 201 || response.statusCode() == 200);
+            return true;
 
         } catch (Exception e) {
             System.err.println("ERREUR CREATE DAO: " + e.getMessage());

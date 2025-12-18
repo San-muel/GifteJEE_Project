@@ -14,21 +14,18 @@ public class Wishlist implements Serializable {
     private String occasion;         
     private LocalDate expirationDate;
     private String status; 
-    private User owner;
-    private Set<User> sharedWithUsers = new HashSet<>();
     private Set<Gift> gifts = new HashSet<>();
     
     public Wishlist() {}
     
     public Wishlist(int id, String title, String occasion, LocalDate expirationDate,
-            String status, User owner) {
+            String status) {
 		this();
 		this.id = id;
 		this.title = title;
 		this.occasion = occasion;
 		this.expirationDate = expirationDate;
 		this.status = status;
-		this.owner = owner;
 	}
     public int getId() {
         return id;
@@ -70,22 +67,6 @@ public class Wishlist implements Serializable {
         this.status = status;
     }
 
-    public User getOwner() {
-        return owner;
-    }
-
-    public void setOwner(User owner) {
-        this.owner = owner;
-    }
-
-    public Set<User> getSharedWithUsers() {
-        return sharedWithUsers;
-    }
-
-    public void setSharedWithUsers(Set<User> sharedWithUsers) {
-        this.sharedWithUsers = sharedWithUsers;
-    }
-
     public Set<Gift> getGifts() {
         return gifts;
     }
@@ -100,10 +81,8 @@ public class Wishlist implements Serializable {
                 "id=" + id +
                 ", title='" + title + '\'' +
                 ", occasion='" + occasion + '\'' +
-                ", owner=" + (owner != null ? owner.getUsername() : "null") +
                 ", status='" + status + '\'' +
                 ", nbGifts=" + gifts.size() +
-                ", nbSharedWith=" + sharedWithUsers.size() +
                 '}';
     }
 

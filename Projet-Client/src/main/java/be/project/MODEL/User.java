@@ -1,30 +1,39 @@
 package be.project.MODEL;
 
+import be.project.DAO.UserDAO;
 import java.io.Serializable;
 import java.util.HashSet;
 import java.util.Objects;
 import java.util.Set;
 
 public class User implements Serializable {
+    private static final long serialVersionUID = 1339986681925033665L;
+    private int id;
+    private String username;
+    private String email;
+    private String psw; 
+    private String token; 
+    
+    private Set<Contribution> contributions = new HashSet<>();
+    private Set<Wishlist> WishlistPartager = new HashSet<>();
+    private Set<Wishlist> WishlistCreer = new HashSet<>();
+    private Set<SharedWishlist> InfoWishlist = new HashSet<>();
 
-	private static final long serialVersionUID = 1339986681925033665L;
-	private int id;
-	private String username;
-	private String email;
-	private String psw; 
-	private String token; 
-	
-	// Relations complexes (Les noms des champs internes restent comme avant)
-	private Set<Contribution> contributions = new HashSet<>();
-	private Set<Wishlist> WishlistPartager = new HashSet<>();
-	private Set<Wishlist> WishlistCreer = new HashSet<>();
-	private Set<SharedWishlist> InfoWishlist = new HashSet<>();
-	
+    // DAO pour la persistance REST
+    private static final UserDAO userDAO = new UserDAO();
+
     public User() {}
-    
-    // ... (Constructeur inchangé) ...
-    
-    // --- Getters et Setters BASIQUES (Inchangés) ---
+
+    // --- Méthodes Active Record ---
+
+    public User login(String email, String password) throws Exception {
+        return userDAO.authenticate(email, password);
+    }
+
+    public boolean register() {
+        if (this.email == null || this.email.isEmpty()) return false;
+        return userDAO.create(this);
+    }
 
     public int getId() { return id; }
     public void setId(int id) { this.id = id; }
@@ -89,6 +98,36 @@ public class User implements Serializable {
     
     // --- Méthodes Object (Inchangées) ---
 
+    public void addGiftLocally(int wishlistId, Gift gift) {
+        this.WishlistCreer.stream()
+            .filter(w -> w.getId() == wishlistId)
+            .findFirst()
+            .ifPresent(w -> w.getGifts().add(gift));
+    }
+
+    /**
+     * Supprime un cadeau localement
+     */
+    public void removeGiftLocally(int wishlistId, int giftId) {
+        this.WishlistCreer.stream()
+            .filter(w -> w.getId() == wishlistId)
+            .findFirst()
+            .ifPresent(w -> w.getGifts().removeIf(g -> g.getId() == giftId));
+    }
+
+    /**
+     * Met à jour un cadeau localement
+     */
+    public void updateGiftLocally(int wishlistId, Gift updatedGift) {
+        this.WishlistCreer.stream()
+            .filter(w -> w.getId() == wishlistId)
+            .findFirst()
+            .ifPresent(w -> {
+                w.getGifts().removeIf(g -> g.getId() == updatedGift.getId());
+                w.getGifts().add(updatedGift);
+            });
+    }
+    
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;

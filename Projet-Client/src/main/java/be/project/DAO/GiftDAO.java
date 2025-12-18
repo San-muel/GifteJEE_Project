@@ -3,60 +3,34 @@ package be.project.DAO;
 import be.project.MODEL.Gift;
 import be.project.MODEL.User;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import org.json.JSONObject; 
-
 import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
-import java.util.List;
 import java.util.Optional;
 
 public class GiftDAO extends DAO<Gift> { 
 
     private final HttpClient client = HttpClient.newHttpClient();
-    private final ObjectMapper objectMapper; 
+    private final ObjectMapper objectMapper = new ObjectMapper();
 
-    public GiftDAO() {
-        this.objectMapper = new ObjectMapper();
-    }
-
-    /**
-     * Crée un nouveau cadeau via l'API.
-     * URL attendue : http://localhost:11265/Projet-API/api/gifts?wishlistId=X
-     */
-    public Optional<Gift> createGift(Gift gift, User user) {
-        String token = user.getToken();
-        if (token == null || token.isEmpty() || gift.getwishlist() == null) {
-            System.err.println("ERREUR GIFT DAO: Token ou Wishlist manquante.");
-            return Optional.empty();
-        }
-
-        // Construction de l'URL avec le paramètre wishlistId (car plus de DTO)
-        String url = ConfigLoad.API_BASE_URL + "gifts?wishlistId=" + gift.getwishlist().getId();
-
+    // POST : /wishlists/{wishlistId}/gifts
+    public Optional<Gift> createGift(Gift gift, int wishlistId, User user) {
+        String url = ConfigLoad.API_BASE_URL + "wishlists/" + wishlistId + "/gifts";
         try {
-            JSONObject jsonBody = new JSONObject();
-            jsonBody.put("name", gift.getName());
-            jsonBody.put("description", gift.getDescription());
-            jsonBody.put("price", gift.getPrice());
-            jsonBody.put("priority", gift.getPriority());
-            jsonBody.put("photoUrl", gift.getPhotoUrl());
+            String jsonBody = objectMapper.writeValueAsString(gift);
 
             HttpRequest request = HttpRequest.newBuilder()
                     .uri(URI.create(url))
                     .header("Content-Type", "application/json")
-                    .header("Accept", "application/json")
-                    .header("Authorization", "Bearer " + token) 
-                    .POST(HttpRequest.BodyPublishers.ofString(jsonBody.toString()))
+                    .header("Authorization", "Bearer " + user.getToken()) 
+                    .POST(HttpRequest.BodyPublishers.ofString(jsonBody))
                     .build();
 
             HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
 
             if (response.statusCode() == 201) {
                 return Optional.of(objectMapper.readValue(response.body(), Gift.class));
-            } else {
-                System.err.println("ERREUR GIFT DAO (POST): " + response.statusCode() + " - " + response.body());
             }
         } catch (Exception e) {
             e.printStackTrace();
@@ -64,69 +38,46 @@ public class GiftDAO extends DAO<Gift> {
         return Optional.empty();
     }
     
-    /**
-     * Modifie un cadeau.
-     * URL attendue : http://localhost:11265/Projet-API/api/gifts/{id}?wishlistId=X
-     */
-    public boolean updateGift(Gift gift, User user) {
-        String token = user.getToken();
-        if (token == null || gift.getwishlist() == null) return false;
-
-        String url = ConfigLoad.API_BASE_URL + "gifts/" + gift.getId() + "?wishlistId=" + gift.getwishlist().getId();
-
+    // PUT : /wishlists/{wishlistId}/gifts/{giftId}
+    public boolean updateGift(Gift gift, int wishlistId, User user) {
+        String url = ConfigLoad.API_BASE_URL + "wishlists/" + wishlistId + "/gifts/" + gift.getId();
         try {
-            JSONObject jsonBody = new JSONObject();
-            // On envoie l'objet Gift sans le wishlistId dans le body
-            jsonBody.put("id", gift.getId());
-            jsonBody.put("name", gift.getName());
-            jsonBody.put("description", gift.getDescription());
-            jsonBody.put("price", gift.getPrice());
-            jsonBody.put("priority", gift.getPriority());
-            jsonBody.put("photoUrl", gift.getPhotoUrl());
+            String jsonBody = objectMapper.writeValueAsString(gift);
 
             HttpRequest request = HttpRequest.newBuilder()
                     .uri(URI.create(url))
                     .header("Content-Type", "application/json")
-                    .header("Authorization", "Bearer " + token) 
-                    .PUT(HttpRequest.BodyPublishers.ofString(jsonBody.toString()))
+                    .header("Authorization", "Bearer " + user.getToken()) 
+                    .PUT(HttpRequest.BodyPublishers.ofString(jsonBody))
                     .build();
 
             HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
-            return response.statusCode() == 200 || response.statusCode() == 204;
-            
+            return response.statusCode() == 204; // 204 No Content est attendu pour un PUT réussi
         } catch (Exception e) {
-            e.printStackTrace();
             return false;
         }
     }
-    
-    /**
-     * Supprime un cadeau.
-     * URL attendue : http://localhost:11265/Projet-API/api/gifts/{id}
-     */
-    public boolean deleteGift(int giftId, User user) {
-        String token = user.getToken();
-        String url = ConfigLoad.API_BASE_URL + "gifts/" + giftId;
 
+    // DELETE : /wishlists/{wishlistId}/gifts/{giftId}
+    public boolean deleteGift(int giftId, int wishlistId, User user) {
+        String url = ConfigLoad.API_BASE_URL + "wishlists/" + wishlistId + "/gifts/" + giftId;
         try {
             HttpRequest request = HttpRequest.newBuilder()
                     .uri(URI.create(url))
-                    .header("Authorization", "Bearer " + token) 
+                    .header("Authorization", "Bearer " + user.getToken()) 
                     .DELETE()
                     .build();
 
             HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
             return response.statusCode() == 204;
         } catch (Exception e) {
-            e.printStackTrace();
             return false;
         }
     }
 
-    // --- Méthodes héritées de DAO<Gift> (à implémenter si nécessaire) ---
     @Override public boolean create(Gift obj) { return false; }
-    @Override public boolean delete(Gift obj) { return deleteGift(obj.getId(), null); }
+    @Override public boolean delete(Gift obj) { return false; }
     @Override public boolean update(Gift obj) { return false; }
     @Override public Gift find(int id) { return null; }
-    @Override public List<Gift> findAll() { return null; }
+    @Override public java.util.List<Gift> findAll() { return null; }
 }

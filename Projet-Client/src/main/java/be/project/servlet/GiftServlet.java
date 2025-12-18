@@ -2,97 +2,92 @@ package be.project.servlet;
 
 import be.project.MODEL.Gift;
 import be.project.MODEL.User;
-import be.project.MODEL.Wishlist;
-import be.project.service.GiftService; 
+import be.project.DAO.GiftDAO; 
 import java.io.IOException;
-import java.util.Optional;
 import javax.servlet.ServletException;
 import javax.servlet.annotation.WebServlet;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-import javax.servlet.http.HttpSession;
 
 @WebServlet("/gift/*") 
 public class GiftServlet extends HttpServlet {
-    private final GiftService giftService = new GiftService();
+    
+    private static final long serialVersionUID = -2219147150738050882L;
+    private final GiftDAO giftDAO = new GiftDAO();
 
-    protected void doPost(HttpServletRequest request, HttpServletResponse response) 
-            throws ServletException, IOException {
-        
+    protected void doPost(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
         String path = request.getPathInfo(); 
-        HttpSession session = request.getSession();
-        User user = (User) session.getAttribute("user");
+        User user = (User) request.getSession().getAttribute("user");
 
-        if (user == null) {
-             response.sendError(HttpServletResponse.SC_FORBIDDEN, "Vous devez être connecté.");
-             return;
+        if (user == null) { 
+            response.sendError(HttpServletResponse.SC_FORBIDDEN); 
+            return; 
         }
         
-        // Routage des actions
         try {
-            if ("/add".equals(path)) {
-                handleAddGift(request, response, user);
-            } else if ("/modify".equals(path) || "/update".equals(path)) { 
-                handleModifyGift(request, response, user);
+        	if ("/add".equals(path)) {
+                System.out.println("CLIENT SERVLET: Début extraction cadeau...");
+                Gift gift = extract(request);
+                
+                String wIdStr = request.getParameter("wishlistId");
+                System.out.println("CLIENT SERVLET: wishlistId reçu -> " + wIdStr);
+                int wId = Integer.parseInt(wIdStr);
+                
+                System.out.println("CLIENT SERVLET: Envoi à l'API via gift.save()...");
+                boolean success = gift.save(wId, user, giftDAO);
+                System.out.println("CLIENT SERVLET: Résultat save -> " + success);
+                
+                if (success) {
+                    user.addGiftLocally(wId, gift); 
+                    response.sendRedirect(request.getContextPath() + "/home?status=added");
+                } else {
+                    System.err.println("CLIENT SERVLET: Échec du save() côté DAO Client");
+                    response.sendRedirect(request.getContextPath() + "/home?error=failed_to_save");
+                }
+
+            } else if ("/update".equals(path)) {
+                Gift gift = extract(request);
+                int gId = Integer.parseInt(request.getParameter("giftId"));
+                gift.setId(gId);
+                int wId = Integer.parseInt(request.getParameter("wishlistId"));
+                
+                boolean success = gift.update(wId, user, giftDAO);
+                
+                if (success) {
+                    user.updateGiftLocally(wId, gift);
+                }
+                response.sendRedirect(request.getContextPath() + "/home?status=updated");
+
             } else if ("/delete".equals(path)) {
-                handleDeleteGift(request, response, user);
-            } else {
-                response.sendError(HttpServletResponse.SC_NOT_FOUND, "Action non reconnue.");
+                int gId = Integer.parseInt(request.getParameter("giftId"));
+                int wId = Integer.parseInt(request.getParameter("wishlistId"));
+                
+                Gift gift = new Gift();
+                gift.setId(gId);
+                
+                boolean success = gift.delete(wId, user, giftDAO);
+                
+                if (success) {
+                    user.removeGiftLocally(wId, gId);
+                }
+                response.sendRedirect(request.getContextPath() + "/home?status=deleted");
             }
         } catch (Exception e) {
-            response.sendRedirect(request.getContextPath() + "/home?error=server_error");
-        }
-    }
-    
-    private void handleAddGift(HttpServletRequest request, HttpServletResponse response, User user) throws IOException {
-        Gift gift = extractGiftFromRequest(request);
-        int wishlistId = Integer.parseInt(request.getParameter("wishlistId"));
-        
-        Optional<Gift> created = giftService.addGift(gift, wishlistId, user);
-        
-        if (created.isPresent()) {
-            response.sendRedirect(request.getContextPath() + "/home?status=gift_added");
-        } else {
-            response.sendRedirect(request.getContextPath() + "/home?error=add_failed");
+            response.sendRedirect(request.getContextPath() + "/home?error=1");
         }
     }
 
-    private void handleModifyGift(HttpServletRequest request, HttpServletResponse response, User user) throws IOException {
-        Gift gift = extractGiftFromRequest(request);
-        gift.setId(Integer.parseInt(request.getParameter("giftId")));
-        int wishlistId = Integer.parseInt(request.getParameter("wishlistId"));
-
-        boolean success = giftService.modifyGift(gift, wishlistId, user);
-        
-        if (success) {
-            response.sendRedirect(request.getContextPath() + "/home?status=gift_modified");
-        } else {
-            response.sendRedirect(request.getContextPath() + "/home?error=modify_failed");
-        }
-    }
-
-    private void handleDeleteGift(HttpServletRequest request, HttpServletResponse response, User user) throws IOException {
-        int giftId = Integer.parseInt(request.getParameter("giftId"));
-        boolean success = giftService.deleteGift(giftId, user);
-        
-        if (success) {
-            response.sendRedirect(request.getContextPath() + "/home?status=gift_deleted");
-        } else {
-            response.sendRedirect(request.getContextPath() + "/home?error=delete_failed");
-        }
-    }
-
-    // Méthode utilitaire pour éviter la répétition
-    private Gift extractGiftFromRequest(HttpServletRequest request) {
-        Gift gift = new Gift();
-        gift.setName(request.getParameter("name"));
-        gift.setDescription(request.getParameter("description"));
-        gift.setPrice(Double.parseDouble(request.getParameter("price")));
-        gift.setPhotoUrl(request.getParameter("photoUrl"));
-        
-        String prio = request.getParameter("priority");
-        gift.setPriority((prio != null && !prio.isEmpty()) ? Integer.parseInt(prio) : null);
-        return gift;
+    private Gift extract(HttpServletRequest req) {
+        Gift g = new Gift();
+        g.setName(req.getParameter("name"));
+        g.setDescription(req.getParameter("description"));
+        // Utilisation de Double.parseDouble avec gestion d'erreur possible selon ton besoin
+        String priceStr = req.getParameter("price");
+        g.setPrice(priceStr != null ? Double.parseDouble(priceStr) : 0.0);
+        g.setPhotoUrl(req.getParameter("photoUrl"));
+        String p = req.getParameter("priority");
+        g.setPriority((p != null && !p.isEmpty()) ? Integer.parseInt(p) : null);
+        return g;
     }
 }
