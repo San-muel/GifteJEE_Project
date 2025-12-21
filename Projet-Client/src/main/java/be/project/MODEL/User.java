@@ -17,7 +17,7 @@ public class User implements Serializable {
     
     private Set<Contribution> contributions = new HashSet<>();
     private Set<Wishlist> WishlistPartager = new HashSet<>();
-    private Set<Wishlist> WishlistCreer = new HashSet<>();
+    private Set<Wishlist> createdWishlists = new HashSet<>();
     private Set<SharedWishlist> InfoWishlist = new HashSet<>();
 
     // DAO pour la persistance REST
@@ -57,11 +57,11 @@ public class User implements Serializable {
      * Mappe sur le champ interne WishlistCreer.
      */
     public Set<Wishlist> getCreatedWishlists() {
-        return WishlistCreer;
+        return createdWishlists;
     }
 
     public void setCreatedWishlists(Set<Wishlist> createdWishlists) {
-        this.WishlistCreer = createdWishlists;
+        this.createdWishlists = createdWishlists;
     }
 
     /**
@@ -101,7 +101,7 @@ public class User implements Serializable {
     // --- Méthodes Object (Inchangées) ---
 
     public void addGiftLocally(int wishlistId, Gift gift) {
-        this.WishlistCreer.stream()
+        this.createdWishlists.stream()
             .filter(w -> w.getId() == wishlistId)
             .findFirst()
             .ifPresent(w -> w.getGifts().add(gift));
@@ -111,7 +111,7 @@ public class User implements Serializable {
      * Supprime un cadeau localement
      */
     public void removeGiftLocally(int wishlistId, int giftId) {
-        this.WishlistCreer.stream()
+        this.createdWishlists.stream()
             .filter(w -> w.getId() == wishlistId)
             .findFirst()
             .ifPresent(w -> w.getGifts().removeIf(g -> g.getId() == giftId));
@@ -121,7 +121,7 @@ public class User implements Serializable {
      * Met à jour un cadeau localement
      */
     public void updateGiftLocally(int wishlistId, Gift updatedGift) {
-        this.WishlistCreer.stream()
+        this.createdWishlists.stream()
             .filter(w -> w.getId() == wishlistId)
             .findFirst()
             .ifPresent(w -> {
@@ -146,5 +146,13 @@ public class User implements Serializable {
     @Override
     public int hashCode() {
         return Objects.hash(id);
+    }
+    
+
+    public void addWishlistLocally(Wishlist wishlist) {
+        if (this.createdWishlists == null) {
+            this.createdWishlists = new HashSet<>(); // ou ArrayList selon ton implémentation
+        }
+        this.createdWishlists.add(wishlist);
     }
 }

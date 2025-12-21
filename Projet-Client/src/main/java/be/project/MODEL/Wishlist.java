@@ -7,7 +7,9 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Set;
 
+// On garde les deux imports ici
 import be.project.DAO.WishlistDAO;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 
 public class Wishlist implements Serializable {
 
@@ -19,6 +21,9 @@ public class Wishlist implements Serializable {
     private String status; 
     private Set<Gift> gifts = new HashSet<>();
     
+    @JsonIgnore // Important pour éviter l'erreur 400 lors de l'envoi vers l'API
+    private User owner;
+
     public Wishlist() {}
     
     public Wishlist(int id, String title, String occasion, LocalDate expirationDate,
@@ -30,6 +35,7 @@ public class Wishlist implements Serializable {
 		this.expirationDate = expirationDate;
 		this.status = status;
 	}
+
     public int getId() {
         return id;
     }
@@ -78,10 +84,18 @@ public class Wishlist implements Serializable {
         this.gifts = gifts;
     }
     
+    // Cette méthode utilise WishlistDAO, d'où l'importance de l'import
     public static List<Wishlist> findAll() {
-        // Le modèle appelle le DAO Client
         WishlistDAO dao = new WishlistDAO();
         return dao.findAll();
+    }
+    
+    public User getOwner() {
+        return owner;
+    }
+
+    public void setOwner(User user) {
+        this.owner = user;
     }
     
     @Override
