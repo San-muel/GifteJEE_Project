@@ -12,9 +12,14 @@
 <body>
 
     <div class="container">
-        <header>
-            <h1>Bienvenue, <c:out value="${user.username}" /> !</h1>
-            <p>Votre tableau de bord personnel : <strong><c:out value="${user.email}" /></strong></p>
+        <header class="nav-header">
+            <div>
+                <h1>Bienvenue, <c:out value="${user.username}" /> !</h1>
+                <p>Votre tableau de bord personnel : <strong><c:out value="${user.email}" /></strong></p>
+            </div>
+            <a href="${pageContext.request.contextPath}/home" class="btn-nav">
+                🏠 Retour à l'affichage des listes de cadeaux
+            </a>
         </header>
         
         <section>
@@ -34,18 +39,24 @@
                                     </p>
                                 </div>
 
-									<div class="add-gift-box">
-									    <h4>➕ Ajouter un nouveau cadeau</h4>
-									    <form action="${pageContext.request.contextPath}/gift/add" method="POST" class="gift-form">
-									        <input type="hidden" name="wishlistId" value="${wl.id}">
-									        <input type="text" name="name" placeholder="Nom" required>
-									        <input type="number" name="price" placeholder="Prix (€)" step="0.01" min="0" required>
-									        <input type="text" name="description" placeholder="Description">
-									        <input type="text" name="photoUrl" placeholder="URL de l'image (ex: http://...)">
-									        <input type="number" name="priority" placeholder="Prio (1-10)" min="1" max="10">
-									        <button type="submit">Ajouter</button>
-									    </form>
-									</div>
+                                <div class="share-action">
+                                    <a href="${pageContext.request.contextPath}/share?wishlistId=${wl.id}&title=${wl.title}" class="btn-share">
+                                        🔗 Partager cette liste
+                                    </a>
+                                </div>
+
+                                <div class="add-gift-box">
+                                    <h4>➕ Ajouter un nouveau cadeau</h4>
+                                    <form action="${pageContext.request.contextPath}/gift/add" method="POST" class="gift-form">
+                                        <input type="hidden" name="wishlistId" value="${wl.id}">
+                                        <input type="text" name="name" placeholder="Nom" required>
+                                        <input type="number" name="price" placeholder="Prix (€)" step="0.01" min="0" required>
+                                        <input type="text" name="description" placeholder="Description">
+                                        <input type="text" name="photoUrl" placeholder="URL de l'image (ex: http://...)">
+                                        <input type="number" name="priority" placeholder="Prio (1-10)" min="1" max="10">
+                                        <button type="submit">Ajouter</button>
+                                    </form>
+                                </div>
                                 
                                 <hr>
 
@@ -55,14 +66,14 @@
                                         <ul class="gift-list">
                                             <c:forEach var="gift" items="${wl.gifts}">
                                                 <li class="gift-item">
-												<div class="gift-info">
-												    <c:if test="${not empty gift.photoUrl}">
-												        <img src="${gift.photoUrl}" alt="${gift.name}" style="width:100px; height:auto; border-radius:8px; margin-bottom:10px; display:block;">
-												    </c:if>
-												
-												    <strong><c:out value="${gift.name}" /></strong> 
-												    (<c:out value="${gift.price}" />€)
-												    </div>
+                                                <div class="gift-info">
+                                                    <c:if test="${not empty gift.photoUrl}">
+                                                        <img src="${gift.photoUrl}" alt="${gift.name}" style="width:100px; height:auto; border-radius:8px; margin-bottom:10px; display:block;">
+                                                    </c:if>
+                                                
+                                                    <strong><c:out value="${gift.name}" /></strong> 
+                                                    (<c:out value="${gift.price}" />€)
+                                                    </div>
                                                     
                                                     <div class="gift-actions">
                                                         <button class="btn-edit" onclick="toggleModifyForm(${gift.id})">Modifier</button>
@@ -72,22 +83,22 @@
                                                             <button type="submit" class="btn-delete" onclick="return confirm('Supprimer ce cadeau ?')">Supprimer</button>
                                                         </form>
                                                     </div>
-													<div id="modify-form-${gift.id}" class="modify-form">
-													    <h5>Modification de ${gift.name}</h5>
-													    <form action="${pageContext.request.contextPath}/gift/update" method="POST">
-													        <input type="hidden" name="giftId" value="${gift.id}">
-													        <input type="hidden" name="wishlistId" value="${wl.id}">
-													        
-													        <input type="text" name="name" value="${gift.name}" placeholder="Nom" required>
-													        <input type="number" name="price" value="${gift.price}" step="0.01" placeholder="Prix">
-													        <input type="text" name="description" value="${gift.description}" placeholder="Description">
-													        
-													        <input type="text" name="photoUrl" value="${gift.photoUrl}" placeholder="URL de l'image">
-													        
-													        <button type="submit">Enregistrer</button>
-													        <button type="button" onclick="toggleModifyForm(${gift.id})">Annuler</button>
-													    </form>
-													</div>
+                                                    <div id="modify-form-${gift.id}" class="modify-form">
+                                                        <h5>Modification de ${gift.name}</h5>
+                                                        <form action="${pageContext.request.contextPath}/gift/update" method="POST">
+                                                            <input type="hidden" name="giftId" value="${gift.id}">
+                                                            <input type="hidden" name="wishlistId" value="${wl.id}">
+                                                            
+                                                            <input type="text" name="name" value="${gift.name}" placeholder="Nom" required>
+                                                            <input type="number" name="price" value="${gift.price}" step="0.01" placeholder="Prix">
+                                                            <input type="text" name="description" value="${gift.description}" placeholder="Description">
+                                                            
+                                                            <input type="text" name="photoUrl" value="${gift.photoUrl}" placeholder="URL de l'image">
+                                                            
+                                                            <button type="submit">Enregistrer</button>
+                                                            <button type="button" onclick="toggleModifyForm(${gift.id})">Annuler</button>
+                                                        </form>
+                                                    </div>
                                                 </li>
                                             </c:forEach>
                                         </ul>
@@ -148,7 +159,8 @@
             </c:choose>
         </section>
 
-        <div class="logout-container">
+        <div class="logout-container" style="display: flex; gap: 20px; align-items: center;">
+            <a href="${pageContext.request.contextPath}/home">Retour à l'affichage des listes</a>
             <a href="${pageContext.request.contextPath}/logout">Se Déconnecter</a>
         </div>
     </div>

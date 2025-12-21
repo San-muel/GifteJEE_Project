@@ -3,8 +3,11 @@ package be.project.MODEL;
 import java.io.Serializable;
 import java.time.LocalDate;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Objects;
 import java.util.Set;
+
+import be.project.DAO.WishlistDAO;
 
 public class Wishlist implements Serializable {
 
@@ -73,6 +76,12 @@ public class Wishlist implements Serializable {
 
     public void setGifts(Set<Gift> gifts) {
         this.gifts = gifts;
+    }
+    
+    public static List<Wishlist> findAll() {
+        // Le modèle appelle le DAO Client
+        WishlistDAO dao = new WishlistDAO();
+        return dao.findAll();
     }
     
     @Override

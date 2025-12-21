@@ -2,16 +2,20 @@ package be.project.MODEL;
 
 import java.io.Serializable;
 import java.time.LocalDateTime;
+import java.util.Objects;
+import be.project.DAO.WishlistDAO;
 
 public class SharedWishlist implements Serializable {
 
-	private static final long serialVersionUID = -8206067521209338294L;
-	private int id;
+    private static final long serialVersionUID = -8206067521209338294L;
+    private int id;
     private LocalDateTime sharedAt;  
-    private String notification;         
+    private String notification;       
+    
+    // On garde ton DAO existant
+    private static final WishlistDAO wishlistDAO = new WishlistDAO();
 
-    public SharedWishlist() {
-    }
+    public SharedWishlist() {}
 
     public SharedWishlist(int id, LocalDateTime sharedAt, String notification) {
         this.id = id;
@@ -19,37 +23,34 @@ public class SharedWishlist implements Serializable {
         this.notification = notification;
     }
 
-    public int getId() {
-        return id;
-    }
+    // --- GETTERS & SETTERS ---
+    public int getId() { return id; }
+    public void setId(int id) { this.id = id; }
+    public LocalDateTime getSharedAt() { return sharedAt; }
+    public void setSharedAt(LocalDateTime sharedAt) { this.sharedAt = sharedAt; }
+    public String getNotification() { return notification; }
+    public void setNotification(String notification) { this.notification = notification; }
 
-    public void setId(int id) {
-        this.id = id;
+    /**
+     * Correction : Ajout du paramètre 'message' pour ne pas perdre la saisie utilisateur
+     */
+    public boolean shareWishlist(int wishlistId, int targetUserId, String message) {
+        // On met à jour l'attribut de l'instance au cas où on en aurait besoin
+        this.notification = message;
+        
+        // On transmet le message au DAO pour qu'il soit inséré en base de données
+        // Assure-toi que wishlistDAO.share accepte (int, int, String)
+        return wishlistDAO.share(wishlistId, targetUserId, message); 
     }
-
-    public LocalDateTime getSharedAt() {
-        return sharedAt;
-    }
-
-    public void setSharedAt(LocalDateTime sharedAt) {
-        this.sharedAt = sharedAt;
-    }
-
-    public String getNotification() {
-        return notification;
-    }
-
-    public void setNotification(String notification) {
-        this.notification = notification;
+    
+    // Overload pour garder la compatibilité si nécessaire
+    public boolean shareWishlist(int wishlistId, int targetUserId) {
+        return this.shareWishlist(wishlistId, targetUserId, null);
     }
 
     @Override
     public String toString() {
-        return "SharedWishlist{" +
-                "id=" + id +
-                ", sharedAt=" + sharedAt +
-                ", notification='" + notification + '\'' +
-                '}';
+        return "SharedWishlist{id=" + id + ", sharedAt=" + sharedAt + ", notification='" + notification + "'}";
     }
 
     @Override
@@ -62,6 +63,6 @@ public class SharedWishlist implements Serializable {
 
     @Override
     public int hashCode() {
-        return Integer.hashCode(id);
+        return Objects.hash(id);
     }
 }

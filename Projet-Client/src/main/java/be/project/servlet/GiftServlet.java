@@ -40,10 +40,10 @@ public class GiftServlet extends HttpServlet {
                 
                 if (success) {
                     user.addGiftLocally(wId, gift); 
-                    response.sendRedirect(request.getContextPath() + "/home?status=added");
+                    response.sendRedirect(request.getContextPath() + "/dashboard?status=added");
                 } else {
                     System.err.println("CLIENT SERVLET: Échec du save() côté DAO Client");
-                    response.sendRedirect(request.getContextPath() + "/home?error=failed_to_save");
+                    response.sendRedirect(request.getContextPath() + "/dashboard?error=failed_to_save");
                 }
 
             } else if ("/update".equals(path)) {
@@ -57,7 +57,7 @@ public class GiftServlet extends HttpServlet {
                 if (success) {
                     user.updateGiftLocally(wId, gift);
                 }
-                response.sendRedirect(request.getContextPath() + "/home?status=updated");
+                response.sendRedirect(request.getContextPath() + "/dashboard?status=updated");
 
             } else if ("/delete".equals(path)) {
                 int gId = Integer.parseInt(request.getParameter("giftId"));
@@ -71,10 +71,10 @@ public class GiftServlet extends HttpServlet {
                 if (success) {
                     user.removeGiftLocally(wId, gId);
                 }
-                response.sendRedirect(request.getContextPath() + "/home?status=deleted");
+                response.sendRedirect(request.getContextPath() + "/dashboard?status=deleted");
             }
         } catch (Exception e) {
-            response.sendRedirect(request.getContextPath() + "/home?error=1");
+            response.sendRedirect(request.getContextPath() + "/dashboard?error=1");
         }
     }
 

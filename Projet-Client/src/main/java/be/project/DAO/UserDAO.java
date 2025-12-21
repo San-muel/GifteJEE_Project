@@ -1,6 +1,6 @@
 package be.project.DAO;
 
-import be.project.MODEL.User;
+import be.project.MODEL.User; // Vérifie la casse (MODEL ou model) // Assure-toi de l'import correct de ta config
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 
@@ -10,9 +10,7 @@ import java.nio.charset.StandardCharsets;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 public class UserDAO extends DAO<User> {
 
@@ -25,9 +23,6 @@ public class UserDAO extends DAO<User> {
         this.objectMapper.registerModule(new JavaTimeModule()); 
     }
 
-    /**
-     * Nettoie l'URL de base pour éviter les doubles slashes
-     */
     private String getCleanBaseUrl() {
         String base = ConfigLoad.API_BASE_URL;
         if (base != null && base.endsWith("/")) {
@@ -37,16 +32,15 @@ public class UserDAO extends DAO<User> {
     }
 
     /**
-     * Authentification RESTful : GET /users?email=...&psw=...
+     * Authentification : Appelle maintenant /users/login
      */
     public User authenticate(String email, String psw) {
         try {
-            String url = getCleanBaseUrl() + "/users" 
+            // si je fais pas du non RESTful ici 
+        		// je pourrais pas differencier login et get all users
+            String url = getCleanBaseUrl() + "/users/login" 
                     + "?email=" + URLEncoder.encode(email, StandardCharsets.UTF_8)
                     + "&psw=" + URLEncoder.encode(psw, StandardCharsets.UTF_8);
-
-            System.out.println("\n[DAO CLIENT - AUTHENTICATE]");
-            System.out.println(">> URL d'appel : " + url);
 
             HttpRequest request = HttpRequest.newBuilder()
                     .uri(URI.create(url))
@@ -55,73 +49,67 @@ public class UserDAO extends DAO<User> {
                     .build();
 
             HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
-            System.out.println("<< Réponse API : Status " + response.statusCode());
 
             if (response.statusCode() == 200) {
                 return objectMapper.readValue(response.body(), User.class);
-            } else {
-                System.err.println("<< Échec Authentification : " + response.body());
-                return null;
+            } else if (response.statusCode() == 401) {
+                System.out.println("DAO DEBUG: Identifiants incorrects (401)");
             }
+            return null;
         } catch (Exception e) {
-            System.err.println("ERREUR AUTH DAO: " + e.getMessage());
-            e.printStackTrace();
+            System.err.println("ERREUR REST UserDAO.authenticate: " + e.getMessage());
             return null;
         }
     }
 
-    /**
-     * Inscription RESTful : POST /users
-     * Utilise une Map pour envoyer uniquement les données nécessaires (Username, Email, Psw)
-     */
+    @Override
+    public List<User> findAll() {
+        try {
+            // Reste sur /users (GET global)
+            String url = getCleanBaseUrl() + "/users";
+            
+            HttpRequest request = HttpRequest.newBuilder()
+                    .uri(URI.create(url))
+                    .header("Accept", "application/json")
+                    .GET()
+                    .build();
+
+            HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
+            
+            if (response.statusCode() == 200) {
+                return objectMapper.readValue(response.body(), 
+                        objectMapper.getTypeFactory().constructCollectionType(List.class, User.class));
+            }
+        } catch (Exception e) {
+            System.err.println("ERREUR REST UserDAO.findAll: " + e.getMessage());
+        }
+        return List.of();
+    }
+
     @Override
     public boolean create(User newUser) {
         try {
+            // Reste sur /users (POST)
             String url = getCleanBaseUrl() + "/users"; 
-
-            // --- MAPPING MANUEL ---
-            // On ne met que les 3 champs indispensables pour éviter l'erreur "Unrecognized field contributions"
-            Map<String, Object> registerData = new HashMap<>();
-            registerData.put("username", newUser.getUsername());
-            registerData.put("email", newUser.getEmail());
-            registerData.put("psw", newUser.getPsw());
-
-            // On génère le JSON à partir de la Map filtrée
-            String jsonBody = objectMapper.writeValueAsString(registerData);
-
-            // --- DEBUG LOG ---
-            System.out.println("\n[DAO CLIENT - CREATE]");
-            System.out.println(">> URL d'appel : " + url);
-            System.out.println(">> Corps JSON (FILTRÉ) : " + jsonBody);
+            
+            // On envoie directement l'objet newUser, Jackson s'occupe du JSON
+            String jsonBody = objectMapper.writeValueAsString(newUser);
 
             HttpRequest request = HttpRequest.newBuilder()
                     .uri(URI.create(url))
                     .header("Content-Type", "application/json")
-                    .header("Accept", "application/json")
                     .POST(HttpRequest.BodyPublishers.ofString(jsonBody))
                     .build();
 
             HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
-
-            System.out.println("<< Réponse API : Status " + response.statusCode());
-            
-            if (response.statusCode() != 201 && response.statusCode() != 200) {
-                System.err.println("<< Détails Erreur API : " + response.body());
-                return false;
-            }
-
-            return true;
-
+            return (response.statusCode() == 201 || response.statusCode() == 200);
         } catch (Exception e) {
-            System.err.println("ERREUR CREATE DAO: " + e.getMessage());
-            e.printStackTrace();
+            System.err.println("ERREUR REST UserDAO.create: " + e.getMessage());
             return false;
         }
     }
 
-    // --- Méthodes héritées non implémentées ---
     @Override public boolean delete(User obj) { return false; }
     @Override public boolean update(User obj) { return false; }
     @Override public User find(int id) { return null; }
-    @Override public List<User> findAll() { return null; }
 }

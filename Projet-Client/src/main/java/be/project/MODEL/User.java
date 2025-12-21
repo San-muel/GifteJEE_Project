@@ -3,6 +3,7 @@ package be.project.MODEL;
 import be.project.DAO.UserDAO;
 import java.io.Serializable;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Objects;
 import java.util.Set;
 
@@ -21,6 +22,7 @@ public class User implements Serializable {
 
     // DAO pour la persistance REST
     private static final UserDAO userDAO = new UserDAO();
+    
 
     public User() {}
 
@@ -126,6 +128,11 @@ public class User implements Serializable {
                 w.getGifts().removeIf(g -> g.getId() == updatedGift.getId());
                 w.getGifts().add(updatedGift);
             });
+    }
+    
+    public static List<User> fetchAllSystemUsers() {
+        // Appelle userDAO.findAll() qui lui-même appelle l'API /users/all
+        return userDAO.findAll(); 
     }
     
     @Override
