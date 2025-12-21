@@ -6,8 +6,12 @@ import java.util.HashSet;
 import java.util.Objects;
 import java.util.Set;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+
 public class Wishlist implements Serializable {
 
+	
+	
 	private static final long serialVersionUID = -6934862286099117393L;
 	private int id;
     private String title;
@@ -15,7 +19,9 @@ public class Wishlist implements Serializable {
     private LocalDate expirationDate;
     private String status; 
     private Set<Gift> gifts = new HashSet<>();
-    
+    @JsonIgnore // <--- AJOUTE CETTE ANNOTATION
+    private User owner;
+
     public Wishlist() {}
     
     public Wishlist(int id, String title, String occasion, LocalDate expirationDate,
@@ -98,4 +104,14 @@ public class Wishlist implements Serializable {
     public int hashCode() {
         return Objects.hash(id);
     }
+
+    public User getOwner() {
+        return owner;
+    }
+
+
+    public void setOwner(User user) {
+        this.owner = user;
+    }
+    
 }

@@ -19,6 +19,114 @@
         
         <section>
             <h2>Mes Listes de Souhaits</h2>
+
+            <div class="add-gift-box" style="background-color: #e3f2fd; margin-bottom: 20px; border-color: #2196F3;">
+                <h3>✨ Créer une nouvelle liste</h3>
+                <form action="${pageContext.request.contextPath}/wishlist/create" method="POST" class="gift-form">
+                    <input type="text" name="title" placeholder="Titre de la liste (ex: Anniversaire 30 ans)" required style="flex: 2;">
+                    
+                    <input type="text" name="occasion" placeholder="Occasion (ex: Noël, Mariage)" required style="flex: 1;">
+                    
+                    <input type="date" name="expirationDate" required title="Date de fin de validité">
+                    
+                    <select name="status">
+                        <option value="ACTIVE">Active</option>
+                        <option value="ARCHIVED">Archivée</option>
+                        <option value="PRIVATE">Privée</option>
+                    </select>
+
+                    <button type="submit" style="background-color: #2196F3;">Créer la liste</button>
+                </form>
+            </div>
+            <c:choose>
+                <c:when test="${not empty user.createdWishlists}">
+                    <ul class="wishlist-list">
+                        <c:forEach var="wl" items="${user.createdWishlists}">  
+                            <li class="wishlist-item">
+                                <div class="wishlist-header">
+                                    <h3>
+                                        <c:out value="${wl.title}" /> 
+                                        <span class="badge"><c:out value="${wl.occasion}" /></span>
+                                    </h3>
+                                    <p class="wishlist-meta">
+                                        Fin : <c:out value="${wl.expirationDate}" /> | Statut : <strong><c:out value="${wl.status}" /></strong>
+                                    </p>
+                                </div>
+
+                                <div class="add-gift-box">
+                                    <h4>➕ Ajouter un nouveau cadeau</h4>
+                                    <form action="${pageContext.request.contextPath}/gift/add" method="POST" class="gift-form">
+                                        <input type="hidden" name="wishlistId" value="${wl.id}">
+                                        <input type="text" name="name" placeholder="Nom" required>
+                                        <input type="number" name="price" placeholder="Prix (€)" step="0.01" min="0" required>
+                                        <input type="text" name="description" placeholder="Description">
+                                        <input type="text" name="photoUrl" placeholder="URL de l'image (ex: http://...)">
+                                        <input type="number" name="priority" placeholder="Prio (1-10)" min="1" max="10">
+                                        <button type="submit">Ajouter</button>
+                                    </form>
+                                </div>
+                                
+                                <hr>
+
+                                <c:choose>
+                                    <c:when test="${not empty wl.gifts}">
+                                        <h4>🎁 Cadeaux de cette liste :</h4>
+                                        <ul class="gift-list">
+                                            <c:forEach var="gift" items="${wl.gifts}">
+                                                <li class="gift-item">
+												<div class="gift-info">
+												    <c:if test="${not empty gift.photoUrl}">
+												        <img src="${gift.photoUrl}" alt="${gift.name}" style="width:100px; height:auto; border-radius:8px; margin-bottom:10px; display:block;">
+												    </c:if>
+												
+												    <strong><c:out value="${gift.name}" /></strong> 
+												    (<c:out value="${gift.price}" />€)
+												    </div>
+                                                    
+                                                    <div class="gift-actions">
+                                                        <button class="btn-edit" onclick="toggleModifyForm(${gift.id})">Modifier</button>
+                                                        <form action="${pageContext.request.contextPath}/gift/delete" method="POST" style="display:inline;">
+                                                            <input type="hidden" name="giftId" value="${gift.id}">
+                                                            <input type="hidden" name="wishlistId" value="${wl.id}">
+                                                            <button type="submit" class="btn-delete" onclick="return confirm('Supprimer ce cadeau ?')">Supprimer</button>
+                                                        </form>
+                                                    </div>
+													<div id="modify-form-${gift.id}" class="modify-form">
+													    <h5>Modification de ${gift.name}</h5>
+													    <form action="${pageContext.request.contextPath}/gift/update" method="POST">
+													        <input type="hidden" name="giftId" value="${gift.id}">
+													        <input type="hidden" name="wishlistId" value="${wl.id}">
+													        
+													        <input type="text" name="name" value="${gift.name}" placeholder="Nom" required>
+													        <input type="number" name="price" value="${gift.price}" step="0.01" placeholder="Prix">
+													        <input type="text" name="description" value="${gift.description}" placeholder="Description">
+													        
+													        <input type="text" name="photoUrl" value="${gift.photoUrl}" placeholder="URL de l'image">
+													        
+													        <button type="submit">Enregistrer</button>
+													        <button type="button" onclick="toggleModifyForm(${gift.id})">Annuler</button>
+													    </form>
+													</div>
+                                                </li>
+                                            </c:forEach>
+                                        </ul>
+                                    </c:when>
+                                    <c:otherwise>
+                                        <p class="empty-msg">Aucun cadeau pour le moment.</p>
+                                    </c:otherwise>
+                                </c:choose>
+                            </li>
+                        </c:forEach>
+                    </ul>
+                </c:when>
+                <c:otherwise>
+                    <p class="info-card">Vous n'avez pas encore de liste active. Utilisez le formulaire ci-dessus pour en créer une !</p>
+                </c:otherwise>
+            </c:choose>
+        </section>
+        
+        <section>
+            <h2>Mes Listes de Souhaits</h2>
             <c:choose>
                 <c:when test="${not empty user.createdWishlists}">
                     <ul class="wishlist-list">

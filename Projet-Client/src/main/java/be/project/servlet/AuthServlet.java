@@ -1,5 +1,4 @@
 package be.project.servlet;
-
 import be.project.MODEL.User;
 import javax.servlet.ServletException;
 import javax.servlet.annotation.WebServlet;
@@ -46,3 +45,4 @@ public class AuthServlet extends HttpServlet {
         }
     }
 }
+
