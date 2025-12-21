@@ -164,13 +164,15 @@ public class WishlistDAO extends DAO<Wishlist> {
             String baseUrl = ConfigLoad.API_BASE_URL;
             if (baseUrl.endsWith("/")) baseUrl = baseUrl.substring(0, baseUrl.length() - 1);
             
-            String url = baseUrl + "/wishlists";
+            // IMPORTANT : On pointe vers /wishlists/all qui est publique
+            String url = baseUrl + "/wishlists/all";
             
-            System.out.println("[DEBUG CLIENT DAO] Récupération de toutes les wishlists sur : " + url);
+            System.out.println("[DEBUG CLIENT DAO] Récupération publique sur : " + url);
 
             HttpRequest request = HttpRequest.newBuilder()
                     .uri(URI.create(url))
                     .header("Accept", "application/json")
+                    // PAS DE HEADER AUTHORIZATION ICI
                     .GET()
                     .build();
 
@@ -180,7 +182,7 @@ public class WishlistDAO extends DAO<Wishlist> {
                 return objectMapper.readValue(response.body(), 
                         objectMapper.getTypeFactory().constructCollectionType(List.class, Wishlist.class));
             } else {
-                System.err.println("[DEBUG CLIENT DAO] Erreur lors du findAll, Status : " + response.statusCode());
+                System.err.println("[DEBUG CLIENT DAO] Erreur findAll, Status : " + response.statusCode());
                 return null;
             }
         } catch (Exception e) {
