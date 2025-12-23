@@ -1,6 +1,9 @@
 package be.project.MODEL;
 
+import be.project.DAO.SharedWishlistDAO;
 import be.project.DAO.UserDAO;
+import be.project.DAO.WishlistDAO;
+
 import java.io.Serializable;
 import java.util.HashSet;
 import java.util.List;
@@ -14,6 +17,7 @@ public class User implements Serializable {
     private String email;
     private String psw; 
     private String token; 
+    
     
     private Set<Contribution> contributions = new HashSet<>();
     private Set<Wishlist> WishlistPartager = new HashSet<>();
@@ -133,6 +137,16 @@ public class User implements Serializable {
     public static List<User> fetchAllSystemUsers() {
         // Appelle userDAO.findAll() qui lui-même appelle l'API /users/all
         return userDAO.findAll(); 
+    }
+    
+    public boolean acceptPublicInvitation(int wishlistId) {
+        // 1. On instancie le DAO
+        WishlistDAO wishlistDAO = new WishlistDAO();
+        
+        // 2. On appelle la méthode share que tu m'as montrée
+        // 'this.id' est l'ID de l'utilisateur qui vient de s'inscrire
+        // On passe un message spécifique pour le lien public
+        return wishlistDAO.share(wishlistId, this.id, "J'ai rejoint ta liste via ton lien public !");
     }
     
     @Override

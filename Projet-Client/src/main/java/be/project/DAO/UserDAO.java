@@ -89,11 +89,19 @@ public class UserDAO extends DAO<User> {
     @Override
     public boolean create(User newUser) {
         try {
-            // Reste sur /users (POST)
             String url = getCleanBaseUrl() + "/users"; 
             
-            // On envoie directement l'objet newUser, Jackson s'occupe du JSON
-            String jsonBody = objectMapper.writeValueAsString(newUser);
+            // --- MAPPING MANUEL ICI ---
+            // On crée une structure simple qui ne contient QUE les 3 champs requis
+            java.util.Map<String, String> registerData = new java.util.HashMap<>();
+            registerData.put("username", newUser.getUsername());
+            registerData.put("email", newUser.getEmail());
+            registerData.put("psw", newUser.getPsw());
+
+            // Jackson va générer : {"username":"...", "email":"...", "psw":"..."}
+            String jsonBody = objectMapper.writeValueAsString(registerData);
+
+            System.out.println("[WEB-DAO] Envoi manuel de : " + jsonBody);
 
             HttpRequest request = HttpRequest.newBuilder()
                     .uri(URI.create(url))
@@ -104,11 +112,10 @@ public class UserDAO extends DAO<User> {
             HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
             return (response.statusCode() == 201 || response.statusCode() == 200);
         } catch (Exception e) {
-            System.err.println("ERREUR REST UserDAO.create: " + e.getMessage());
+            System.err.println("[WEB-DAO] Erreur : " + e.getMessage());
             return false;
         }
     }
-
     @Override public boolean delete(User obj) { return false; }
     @Override public boolean update(User obj) { return false; }
     @Override public User find(int id) { return null; }

@@ -7,6 +7,7 @@ import javax.servlet.annotation.WebServlet;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import javax.servlet.http.HttpSession;
 
 @WebServlet("/register")
 public class RegisterServlet extends HttpServlet {
@@ -19,20 +20,64 @@ public class RegisterServlet extends HttpServlet {
 
     protected void doPost(HttpServletRequest request, HttpServletResponse response) 
             throws ServletException, IOException {
+        
+        String email = request.getParameter("email");
+        String password = request.getParameter("password");
+        
         try {
             User newUser = new User();
             newUser.setUsername(request.getParameter("username"));
-            newUser.setEmail(request.getParameter("email"));
-            newUser.setPsw(request.getParameter("password"));
+            newUser.setEmail(email);
+            newUser.setPsw(password);
 
-            // Appel direct au modèle
+            // 1. Inscription : Création du compte via l'API
             if (newUser.register()) {
-                response.sendRedirect(request.getContextPath() + "/auth?success=true");
+                
+                // 2. Premier Login : Indispensable pour récupérer l'ID généré par la DB
+                User userWithId = newUser.login(email, password); 
+                
+                if (userWithId != null) {
+                    HttpSession session = request.getSession();
+                    Object pendingIdObj = session.getAttribute("pendingWishlistId");
+                    
+                    if (pendingIdObj != null) {
+                        try {
+                            int wId = Integer.parseInt(pendingIdObj.toString());
+                            
+                            // 3. Liaison : On lie l'utilisateur à la wishlist dans la DB
+                            boolean shared = userWithId.acceptPublicInvitation(wId);
+                            
+                            if (shared) {
+                                System.out.println("[REGISTER] Liaison réussie. Rafraîchissement des données...");
+                                
+                                // 4. Deuxième Login : Pour que l'objet Java contienne la nouvelle wishlist 
+                                // dans ses listes partagées (refresh local)
+                                userWithId = userWithId.login(email, password); 
+                                
+                                session.setAttribute("user", userWithId);
+                                session.removeAttribute("pendingWishlistId");
+                                
+                                response.sendRedirect(request.getContextPath() + "/dashboard?status=welcome_shared");
+                                return;
+                            }
+                        } catch (NumberFormatException nfe) {
+                            System.err.println("[REGISTER] Erreur format ID : " + pendingIdObj);
+                        }
+                    }
+                    
+                    // Si pas d'invitation, on connecte l'utilisateur tel quel
+                    session.setAttribute("user", userWithId);
+                }
+                
+                response.sendRedirect(request.getContextPath() + "/dashboard?success=true");
+                
             } else {
-                request.setAttribute("error", "Échec de l'inscription.");
+                request.setAttribute("error", "Échec de l'inscription. L'email est peut-être déjà utilisé.");
                 doGet(request, response);
             }
         } catch (Exception e) {
+            System.err.println("[REGISTER] Erreur Serveur : " + e.getMessage());
+            e.printStackTrace();
             response.sendRedirect(request.getContextPath() + "/register?error=server_error");
         }
     }

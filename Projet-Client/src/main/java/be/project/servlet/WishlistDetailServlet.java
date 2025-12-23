@@ -10,18 +10,32 @@ import java.io.IOException;
 
 @WebServlet("/wishlistDetail")
 public class WishlistDetailServlet extends HttpServlet {
-    protected void doGet(HttpServletRequest request, HttpServletResponse response) 
-            throws ServletException, IOException {
-        
-        String idParam = request.getParameter("id");
-        if (idParam != null) {
-        	String id = request.getParameter("id");
-            System.out.println("[DETAIL] Clic sur la wishlist ID : " + id);
-            // On utilise Active Record pour trouver la liste et ses cadeaux
-            Wishlist wl = null;
-            request.setAttribute("selectedWishlist", wl);
-        }
+	private static final long serialVersionUID = 3020048919194754366L;
+	
+	protected void doGet(HttpServletRequest request, HttpServletResponse response) 
+	        throws ServletException, IOException {
+	    
+	    String idParam = request.getParameter("id");
+	    
+	    if (idParam != null && !idParam.isEmpty()) {
+	        try {
+	            int id = Integer.parseInt(idParam);
+	            System.out.println("[DETAIL] Appel du modèle pour la wishlist ID : " + id);
+	            
+	            Wishlist wl = Wishlist.find(id);
+	            
+	            if (wl != null) {
+	                request.setAttribute("selectedWishlist", wl);
+	            } else {
+	                request.setAttribute("error", "La liste demandée est introuvable.");
+	            }
+	            
+	        } catch (NumberFormatException e) {
+	            System.err.println("[DETAIL] Format d'ID invalide : " + idParam);
+	        }
+	    }
 
-        request.getRequestDispatcher("/WEB-INF/Vues/Home/wishlistDetail.jsp").forward(request, response);
-    }
+	    // Forward vers la JSP de détail
+	    request.getRequestDispatcher("/WEB-INF/Vues/Home/wishlistDetail.jsp").forward(request, response);
+	}
 }

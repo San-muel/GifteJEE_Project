@@ -116,6 +116,10 @@ public class Wishlist implements Serializable {
         Wishlist wishlist = (Wishlist) o;
         return id == wishlist.id;
     }
+    public static Wishlist find(int id) {
+        WishlistDAO dao = new WishlistDAO();
+        return dao.find(id);
+    }
 
     @Override
     public int hashCode() {

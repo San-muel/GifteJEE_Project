@@ -196,5 +196,37 @@ public class WishlistDAO extends DAO<Wishlist> {
     @Override public boolean create(Wishlist obj) { return false; }
     @Override public boolean delete(Wishlist obj) { return false; }
     @Override public boolean update(Wishlist obj) { return false; }
-    @Override public Wishlist find(int id) { return null; }
+
+    @Override 
+    public Wishlist find(int id) {
+        try {
+            String baseUrl = ConfigLoad.API_BASE_URL;
+            if (baseUrl.endsWith("/")) baseUrl = baseUrl.substring(0, baseUrl.length() - 1);
+            
+            // URL REST : /wishlists/{id}
+            String url = baseUrl + "/wishlists/" + id;
+            
+            System.out.println("[DEBUG CLIENT DAO] Recherche de la wishlist ID " + id + " sur : " + url);
+
+            HttpRequest request = HttpRequest.newBuilder()
+                    .uri(URI.create(url))
+                    .header("Accept", "application/json")
+                    .GET()
+                    .build();
+
+            HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
+
+            if (response.statusCode() == 200) {
+                // Désérialisation du JSON reçu en objet Wishlist
+                return objectMapper.readValue(response.body(), Wishlist.class);
+            } else {
+                System.err.println("[DEBUG CLIENT DAO] Erreur findById, Status : " + response.statusCode());
+                return null;
+            }
+        } catch (Exception e) {
+            System.err.println("[DEBUG CLIENT DAO] ERREUR findById : " + e.getMessage());
+            e.printStackTrace();
+            return null;
+        }
+    }
 }
