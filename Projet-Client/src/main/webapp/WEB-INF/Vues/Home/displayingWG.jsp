@@ -85,21 +85,45 @@
                                 <c:choose>
                                     <c:when test="${not empty wl.gifts}">
                                         <ul class="gift-list">
-                                            <c:forEach var="gift" items="${wl.gifts}">
-                                                <li class="gift-item">
-                                                    <div class="gift-info">
-                                                        <c:if test="${not empty gift.photoUrl}"><img src="${gift.photoUrl}" style="width:60px; margin-right:10px;"></c:if>
-                                                        <strong><c:out value="${gift.name}" /></strong> (<c:out value="${gift.price}" />€)
-                                                    </div>
-                                                    <div class="gift-actions">
-                                                        <button class="btn-edit" onclick="toggleModifyForm(${gift.id})">Modifier</button>
-                                                        <form action="${pageContext.request.contextPath}/gift/delete" method="POST" style="display:inline;">
-                                                            <input type="hidden" name="giftId" value="${gift.id}"><input type="hidden" name="wishlistId" value="${wl.id}">
-                                                            <button type="submit" class="btn-delete" onclick="return confirm('Supprimer ?')">Supprimer</button>
-                                                        </form>
-                                                    </div>
-                                                </li>
-                                            </c:forEach>
+										<c:forEach var="gift" items="${wl.gifts}">
+										    <li class="gift-item" style="flex-direction: column; align-items: stretch;">
+										        <div style="display: flex; justify-content: space-between; align-items: center; width: 100%;">
+										            <div class="gift-info">
+										                <c:if test="${not empty gift.photoUrl}">
+										                    <img src="${gift.photoUrl}" style="width:60px; margin-right:10px;">
+										                </c:if>
+										                <strong><c:out value="${gift.name}" /></strong> (<c:out value="${gift.price}" />€)
+										            </div>
+										            <div class="gift-actions">
+										                <button type="button" class="btn-edit" onclick="toggleModifyForm(${gift.id})">Modifier</button>
+										                
+										                <form action="${pageContext.request.contextPath}/gift/delete" method="POST" style="display:inline;">
+										                    <input type="hidden" name="giftId" value="${gift.id}">
+										                    <input type="hidden" name="wishlistId" value="${wl.id}">
+										                    <button type="submit" class="btn-delete" onclick="return confirm('Supprimer ?')">Supprimer</button>
+										                </form>
+										            </div>
+										        </div>
+										
+										        <div id="modify-form-${gift.id}" class="add-gift-box" style="display:none; margin-top: 10px; background-color: #fff9c4; border-color: #fbc02d;">
+										            <h4 style="margin-top:0;">✏️ Modifier le cadeau</h4>
+										            <form action="${pageContext.request.contextPath}/gift/update" method="POST" class="gift-form">
+										                <input type="hidden" name="giftId" value="${gift.id}">
+										                <input type="hidden" name="wishlistId" value="${wl.id}">
+										                
+										                <input type="text" name="name" value="<c:out value='${gift.name}'/>" required>
+										                <input type="number" name="price" value="<c:out value='${gift.price}'/>" step="0.01" required>
+										                <input type="text" name="description" value="<c:out value='${gift.description}'/>" placeholder="Description">
+										                <input type="text" name="photoUrl" value="<c:out value='${gift.photoUrl}'/>" placeholder="URL Image">
+										                
+										                <div style="margin-top:10px;">
+										                    <button type="submit" style="background-color: #fbc02d; color: black;">Enregistrer</button>
+										                    <button type="button" onclick="toggleModifyForm(${gift.id})" style="background-color: #ccc;">Annuler</button>
+										                </div>
+										            </form>
+										        </div>
+										    </li>
+										</c:forEach>
                                         </ul>
                                     </c:when>
                                     <c:otherwise><p class="empty-msg">Aucun cadeau.</p></c:otherwise>

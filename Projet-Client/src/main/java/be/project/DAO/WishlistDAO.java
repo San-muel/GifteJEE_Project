@@ -203,7 +203,6 @@ public class WishlistDAO extends DAO<Wishlist> {
             String baseUrl = ConfigLoad.API_BASE_URL;
             if (baseUrl.endsWith("/")) baseUrl = baseUrl.substring(0, baseUrl.length() - 1);
             
-            // URL REST : /wishlists/{id}
             String url = baseUrl + "/wishlists/" + id;
             
             System.out.println("[DEBUG CLIENT DAO] Recherche de la wishlist ID " + id + " sur : " + url);
@@ -217,14 +216,33 @@ public class WishlistDAO extends DAO<Wishlist> {
             HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
 
             if (response.statusCode() == 200) {
-                // Désérialisation du JSON reçu en objet Wishlist
-                return objectMapper.readValue(response.body(), Wishlist.class);
+                String jsonRaw = response.body();
+                
+                // --- LOGS DE DÉBOGAGE ---
+                System.out.println("[DEBUG CLIENT DAO] JSON BRUT REÇU : " + jsonRaw);
+                
+                Wishlist wishlist = objectMapper.readValue(jsonRaw, Wishlist.class);
+                
+                if (wishlist != null) {
+                    System.out.println("[DEBUG CLIENT DAO] Objet Wishlist créé : " + wishlist.getTitle());
+                    if (wishlist.getGifts() != null) {
+                        System.out.println("[DEBUG CLIENT DAO] Nombre de cadeaux dans l'objet : " + wishlist.getGifts().size());
+                        wishlist.getGifts().forEach(g -> 
+                            System.out.println("   -> Cadeau détecté : " + g.getName() + " (ID: " + g.getId() + ")")
+                        );
+                    } else {
+                        System.out.println("[DEBUG CLIENT DAO] ATTENTION : La liste 'gifts' est NULL après désérialisation !");
+                    }
+                }
+                // ------------------------
+                
+                return wishlist;
             } else {
                 System.err.println("[DEBUG CLIENT DAO] Erreur findById, Status : " + response.statusCode());
                 return null;
             }
         } catch (Exception e) {
-            System.err.println("[DEBUG CLIENT DAO] ERREUR findById : " + e.getMessage());
+            System.err.println("[DEBUG CLIENT DAO] ERREUR CRITIQUE : " + e.getMessage());
             e.printStackTrace();
             return null;
         }
