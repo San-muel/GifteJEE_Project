@@ -72,4 +72,51 @@ public class ContributionServlet extends HttpServlet {
             response.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "Une erreur interne est survenue : " + e.getMessage());
         }
     }
+ // be.project.servlet.ContributionServlet
+
+    protected void doPost(HttpServletRequest request, HttpServletResponse response) 
+            throws ServletException, IOException {
+        
+        try {
+            // 1. Récupérer les paramètres
+            int giftId = Integer.parseInt(request.getParameter("giftId"));
+            int wishlistId = Integer.parseInt(request.getParameter("wishlistId"));
+            double amount = Double.parseDouble(request.getParameter("amount"));
+            String comment = request.getParameter("comment");
+            
+            // 2. Récupérer l'OBJET User complet en session
+            // Important : on a besoin de l'objet entier pour obtenir l'ID ET le Token Bearer
+            be.project.MODEL.User currentUser = (be.project.MODEL.User) request.getSession().getAttribute("user");
+
+            if (currentUser == null) {
+                response.sendRedirect(request.getContextPath() + "/login"); // Sécurité
+                return;
+            }
+
+            // 3. Préparer la contribution
+            Contribution contrib = new Contribution();
+            contrib.setAmount(amount);
+            contrib.setComment(comment);
+            // L'ID utilisateur est géré soit ici, soit dans le DAO via l'objet user
+            contrib.setUserId(currentUser.getId()); 
+
+            // 4. Appel Active Record (on passe giftId et l'user pour le token)
+            Contribution result = contrib.create(giftId, currentUser); 
+
+            // 5. Redirection selon le résultat
+            if (result != null) {
+                // Succès
+                response.sendRedirect(request.getContextPath() + "/wishlistDetail?id=" + wishlistId + "&success=contrib");
+            } else {
+                // Échec (montant trop élevé ou erreur API)
+                response.sendRedirect(request.getContextPath() + "/wishlistDetail?id=" + wishlistId + "&error=contrib_failed");
+            }
+
+        } catch (NumberFormatException e) {
+            response.sendError(HttpServletResponse.SC_BAD_REQUEST, "Format de données invalide");
+        } catch (Exception e) {
+            e.printStackTrace();
+            response.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
+        }
+    }
 }

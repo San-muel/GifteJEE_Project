@@ -6,10 +6,14 @@ import java.util.HashSet;
 import java.util.Objects;
 import java.util.Set;
 
+import be.project.DAO.ContributionDAO;
+
 public class Contribution implements Serializable {
 
 	private static final long serialVersionUID = -5457008270231888261L;
 	private int id;
+	private int userId; 
+    private int giftId;
     private double amount;
     private LocalDateTime contributedAt;
     private String comment;
@@ -25,6 +29,22 @@ public class Contribution implements Serializable {
         this.comment = comment;
     }
 
+	public int getUserId() {
+		return userId;
+	}
+
+	public void setUserId(int userId) {
+		this.userId = userId;
+	}
+
+	public int getGiftId() {
+		return giftId;
+	}
+
+	public void setGiftId(int giftId) {
+		this.giftId = giftId;
+	}
+    
     public int getId() {
         return id;
     }
@@ -80,6 +100,22 @@ public class Contribution implements Serializable {
                 ", contributedAt=" + contributedAt +
                 ", comment='" + comment + '\'' +
                 '}';
+    }
+    
+ // be.project.MODEL.Contribution
+
+    public Contribution create(int giftId, User user) {
+        ContributionDAO dao = new ContributionDAO();
+        // On appelle la méthode du DAO qui renvoie un Optional
+        java.util.Optional<Contribution> result = dao.createContribution(this, giftId, user);
+        
+        // Si la création a réussi, on met à jour l'objet actuel avec l'ID et la date générés par l'API
+        if (result.isPresent()) {
+            this.id = result.get().getId();
+            this.contributedAt = result.get().getContributedAt();
+            return this;
+        }
+        return null;
     }
 
     @Override
