@@ -7,6 +7,8 @@ import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
+import be.project.MODEL.Wishlist;
+
 /**
  * Servlet implementation class ToggleStatusServlet
  */
@@ -16,8 +18,8 @@ public class ToggleStatusServlet extends HttpServlet {
             throws ServletException, IOException {
         
         int wishlistId = Integer.parseInt(request.getParameter("wishlistId"));
-        WishlistDAO dao = new WishlistDAO();
-        Wishlist wl = dao.find(wishlistId);
+        /*WishlistDAO dao = new WishlistDAO();*/
+        Wishlist wl = null;
 
         if (wl != null) {
             // Logique de bascule
@@ -29,7 +31,7 @@ public class ToggleStatusServlet extends HttpServlet {
                     wl.setStatus("ACTIVE");
                 }
             }
-            dao.update(wl); // Assurez-vous d'avoir une méthode update dans votre DAO
+          //  dao.update(wl);  Assurez-vous d'avoir une méthode update dans votre DAO
         }
 
         response.sendRedirect(request.getContextPath() + "/dashboard");

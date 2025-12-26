@@ -1,5 +1,7 @@
 <%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
 <%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
+<%@ taglib prefix="fmt" uri="http://java.sun.com/jsp/jstl/fmt" %> 
+
 <!DOCTYPE html>
 <html lang="fr">
 <head>
@@ -7,39 +9,19 @@
     <title>Détail de la liste - <c:out value="${selectedWishlist.title}" /></title>
     <link rel="stylesheet" href="${pageContext.request.contextPath}/CSS/main.css">
     <style>
-        .contribution-box {
-            display: none;
-            margin-top: 10px;
-            padding: 10px;
-            background: #f9f9f9;
-            border-radius: 5px;
-            border: 1px solid #ddd;
-        }
-        .gift-item {
-            display: flex;
-            align-items: center;
-            gap: 20px;
-            padding: 15px;
-            border-bottom: 1px solid #eee;
-            background: white;
-            margin-bottom: 10px;
-            border-radius: 8px;
-        }
-        .gift-details { flex-grow: 1; }
-        .input-amount {
-            padding: 5px;
-            width: 80px;
-            border-radius: 4px;
-            border: 1px solid #ccc;
-        }
-        .btn-submit-contribution {
-            background-color: #4caf50;
-            color: white;
-            border: none;
-            padding: 5px 10px;
-            border-radius: 4px;
-            cursor: pointer;
-        }
+        .contribution-box { display: none; margin-top: 10px; padding: 10px; background: #f9f9f9; border-radius: 5px; border: 1px solid #ddd; }
+        .gift-item { display: flex; align-items: center; gap: 20px; padding: 15px; border-bottom: 1px solid #eee; background: white; margin-bottom: 10px; border-radius: 8px; flex-wrap: wrap; }
+        .gift-details { flex-grow: 1; min-width: 200px; }
+        .input-amount { padding: 5px; width: 80px; border-radius: 4px; border: 1px solid #ccc; }
+        .btn-submit-contribution { background-color: #4caf50; color: white; border: none; padding: 5px 10px; border-radius: 4px; cursor: pointer; }
+        .btn-completed { background-color: #ccc; cursor: not-allowed; color: #666; padding: 5px 10px; border:none; border-radius: 4px;}
+        
+        /* Styles Barre de progression */
+        .progress-container { width: 100%; background-color: #e0e0e0; border-radius: 10px; margin: 10px 0; height: 10px; overflow: hidden; }
+        .progress-bar { height: 100%; background-color: #4caf50; transition: width 0.5s ease-in-out; }
+        .amount-info { font-size: 0.9em; color: #555; display: flex; justify-content: space-between; }
+        .missing-amount { color: #d32f2f; font-weight: bold; }
+        .fully-funded { color: #4caf50; font-weight: bold; }
     </style>
 </head>
 <body class="home-body">
@@ -47,14 +29,16 @@
         <header style="margin-bottom: 20px;">
             <a href="${pageContext.request.contextPath}/home" class="btn-nav">← Retour aux listes</a>
             <h1 style="margin-top: 15px;"><c:out value="${selectedWishlist.title}" /></h1>
-            <p class="badge" style="display:inline-block;">📅 Expire le : ${selectedWishlist.expirationDate}</p>
-            <p><strong>Occasion :</strong> <c:out value="${selectedWishlist.occasion}" /></p>
+            <p class="badge">📅 Expire le : ${selectedWishlist.expirationDate}</p>
         </header>
 
         <section class="gift-list-container">
             <c:choose>
                 <c:when test="${not empty selectedWishlist.gifts}">
                     <c:forEach var="gift" items="${selectedWishlist.gifts}">
+                        
+                        <c:set var="percentage" value="${(gift.collectedAmount / gift.price) * 100}" />
+                        
                         <div class="gift-item">
                             <c:if test="${not empty gift.photoUrl}">
                                 <img src="${gift.photoUrl}" alt="${gift.name}" style="width:100px; height:100px; object-fit: cover; border-radius: 5px;">
@@ -62,50 +46,74 @@
                             
                             <div class="gift-details">
                                 <h3 style="margin:0;"><c:out value="${gift.name}" /></h3>
-                                <p style="color: #2c3e50; font-weight: bold; margin: 5px 0;">Prix : ${gift.price}€</p>
+                                <p style="color: #2c3e50; font-weight: bold; margin: 5px 0;">
+                                    Prix : <fmt:formatNumber value="${gift.price}" type="currency" currencySymbol="€"/>
+                                </p>
                                 <p style="font-size: 0.9em; color: #666;"><c:out value="${gift.description}" /></p>
+
+                                <div class="progress-container">
+                                    <div class="progress-bar" style="width: ${percentage > 100 ? 100 : percentage}%;"></div>
+                                </div>
+                                <div class="amount-info">
+                                    <span>
+                                        Récolté : <fmt:formatNumber value="${gift.collectedAmount}" type="number" minFractionDigits="2" maxFractionDigits="2"/> €
+                                    </span>
+                                    
+                                    <c:choose>
+                                        <c:when test="${gift.remainingAmount > 0.01}">
+                                            <span class="missing-amount">
+                                                Reste : <fmt:formatNumber value="${gift.remainingAmount}" type="number" minFractionDigits="2" maxFractionDigits="2"/> €
+                                            </span>
+                                        </c:when>
+                                        <c:otherwise>
+                                            <span class="fully-funded">✨ Financé !</span>
+                                        </c:otherwise>
+                                    </c:choose>
+                                </div>
                             </div>
 
                             <div class="gift-action-area">
-                                <button class="btn-contribute" onclick="toggleContributionForm(${gift.id})">
-                                    💰 Participer
-                                </button>
-                                
-                                <div id="form-contribution-${gift.id}" class="contribution-box">
-                                    <form action="${pageContext.request.contextPath}/gift/contribute" method="POST">
-                                        <input type="hidden" name="giftId" value="${gift.id}">
-                                        <input type="hidden" name="wishlistId" value="${selectedWishlist.id}">
+                                <c:choose>
+                                    <c:when test="${gift.remainingAmount > 0.01}">
+                                        <button class="btn-contribute" onclick="toggleContributionForm(${gift.id})">
+                                            💰 Participer
+                                        </button>
                                         
-                                        <label style="display:block; font-size: 0.8em; margin-bottom: 5px;">Montant (€) :</label>
-                                        <input type="number" name="amount" class="input-amount" step="0.01" min="0.01" max="${gift.price}" required>
-                                        <button type="submit" class="btn-submit-contribution">OK</button>
-                                    </form>
-                                </div>
+                                        <div id="form-contribution-${gift.id}" class="contribution-box">
+                                            <form action="${pageContext.request.contextPath}/contribution/add" method="POST">
+                                                <input type="hidden" name="giftId" value="${gift.id}">
+                                                <input type="hidden" name="wishlistId" value="${selectedWishlist.id}">
+                                                
+                                                <label>Montant (€) :</label>
+                                                <input type="number" name="amount" class="input-amount" step="0.01" min="1" max="${gift.remainingAmount}" placeholder="Max ${gift.remainingAmount}" required>
+
+                                                <label style="margin-top: 5px;">Petit mot :</label>
+                                                <input type="text" name="comment" placeholder="Message...">
+
+                                                <button type="submit" class="btn-submit-contribution" style="width:100%; margin-top:5px;">Valider</button>
+                                            </form>
+                                        </div>
+                                    </c:when>
+                                    <c:otherwise>
+                                        <button class="btn-completed" disabled>
+                                            ✔️ Complet
+                                        </button>
+                                    </c:otherwise>
+                                </c:choose>
                             </div>
                         </div>
                     </c:forEach>
                 </c:when>
                 <c:otherwise>
-                    <p class="info-card">Aucun cadeau n'a été ajouté à cette liste pour le moment.</p>
+                    <p class="info-card">Aucun cadeau dans cette liste.</p>
                 </c:otherwise>
             </c:choose>
         </section>
     </div>
-
     <script>
-        /**
-         * Affiche ou masque le champ de saisie du montant pour un cadeau spécifique
-         */
-        function toggleContributionForm(giftId) {
-            const formDiv = document.getElementById('form-contribution-' + giftId);
-            if (formDiv.style.display === 'block') {
-                formDiv.style.display = 'none';
-            } else {
-                // Optionnel : fermer les autres formulaires ouverts
-                document.querySelectorAll('.contribution-box').forEach(el => el.style.display = 'none');
-                
-                formDiv.style.display = 'block';
-            }
+        function toggleContributionForm(id) {
+            const form = document.getElementById('form-contribution-' + id);
+            form.style.display = (form.style.display === 'block') ? 'none' : 'block';
         }
     </script>
 </body>

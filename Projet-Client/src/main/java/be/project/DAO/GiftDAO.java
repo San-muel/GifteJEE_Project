@@ -15,11 +15,14 @@ public class GiftDAO extends DAO<Gift> {
     private final ObjectMapper objectMapper = new ObjectMapper();
 
     // POST : /wishlists/{wishlistId}/gifts
+ // Dans GiftDAO.java (Client)
     public Optional<Gift> createGift(Gift gift, int wishlistId, User user) {
         String url = ConfigLoad.API_BASE_URL + "wishlists/" + wishlistId + "/gifts";
+        System.out.println("[CLIENT DAO] Envoi POST vers : " + url);
+        System.out.println("[CLIENT DAO] Token utilisé : " + user.getToken());
+        
         try {
             String jsonBody = objectMapper.writeValueAsString(gift);
-
             HttpRequest request = HttpRequest.newBuilder()
                     .uri(URI.create(url))
                     .header("Content-Type", "application/json")
@@ -28,11 +31,18 @@ public class GiftDAO extends DAO<Gift> {
                     .build();
 
             HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
+            
+            // --- LOGS CRITIQUES ---
+            System.out.println("[CLIENT DAO] STATUS CODE RECU : " + response.statusCode());
+            System.out.println("[CLIENT DAO] CORPS RECU : " + response.body());
 
             if (response.statusCode() == 201) {
                 return Optional.of(objectMapper.readValue(response.body(), Gift.class));
+            } else {
+                System.err.println("[CLIENT DAO] Echec. Status: " + response.statusCode());
             }
         } catch (Exception e) {
+            System.err.println("[CLIENT DAO] EXCEPTION : " + e.getMessage());
             e.printStackTrace();
         }
         return Optional.empty();

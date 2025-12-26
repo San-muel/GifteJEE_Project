@@ -35,6 +35,8 @@ public class GiftServlet extends HttpServlet {
                 int wId = Integer.parseInt(wIdStr);
                 
                 System.out.println("CLIENT SERVLET: Envoi à l'API via gift.save()...");
+                System.out.println("wId "+wId);
+                System.out.println("user "+user.getUsername());
                 boolean success = gift.save(wId, user, giftDAO);
                 System.out.println("CLIENT SERVLET: Résultat save -> " + success);
                 

@@ -20,7 +20,7 @@ public class Gift implements Serializable {
     private String photoUrl;
     private Set<Contribution> contributions = new HashSet<>();
 
-    public Gift() {}
+	public Gift() {}
     
     public boolean save(int wishlistId, User user, GiftDAO giftDAO) {
         Optional<Gift> result = giftDAO.createGift(this, wishlistId, user);
@@ -52,12 +52,34 @@ public class Gift implements Serializable {
     public void setPriority(Integer priority) { this.priority = priority; }
     public String getPhotoUrl() { return photoUrl; }
     public void setPhotoUrl(String photoUrl) { this.photoUrl = photoUrl; }
+    
+    public Set<Contribution> getContributions() {
+		return contributions;
+	}
 
+	public void setContributions(Set<Contribution> contributions) {
+		this.contributions = contributions;
+	}
     @JsonIgnore
     public GiftStatus getStatus() {
         double total = contributions.stream().mapToDouble(Contribution::getAmount).sum();
         if (total >= price && total > 0) return GiftStatus.FUNDED;
         if (total > 0) return GiftStatus.PARTIALLY_FUNDED;
         return GiftStatus.AVAILABLE;
+    }
+    @JsonIgnore
+    public double getCollectedAmount() {
+        if (contributions == null || contributions.isEmpty()) {
+            return 0.0;
+        }
+        // Somme des montants
+        return contributions.stream()
+                            .mapToDouble(Contribution::getAmount)
+                            .sum();
+    }
+    @JsonIgnore
+    public double getRemainingAmount() {
+        double remaining = this.price - getCollectedAmount();
+        return Math.max(0, remaining); // Empêche les nombres négatifs
     }
 }
