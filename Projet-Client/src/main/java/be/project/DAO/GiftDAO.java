@@ -52,7 +52,7 @@ public class GiftDAO extends DAO<Gift> {
                     .build();
 
             HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
-            return response.statusCode() == 204; // 204 No Content est attendu pour un PUT réussi
+            return response.statusCode() == 204; // 204 No Content est attendu pour un PUT rÃ©ussi
         } catch (Exception e) {
             return false;
         }

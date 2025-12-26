@@ -2,13 +2,15 @@ package be.project.DAO;
 
 import be.project.MODEL.Contribution;
 import be.project.MODEL.User;
+import org.json.JSONArray;
 import org.json.JSONObject;
 
-import java.time.LocalDateTime;
 import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
+import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
@@ -19,57 +21,17 @@ public class ContributionDAO extends DAO<Contribution> {
     public ContributionDAO() {}
 
     /**
-     * Crée une contribution via l'API.
-     * URL : /gifts/{giftId}/contributions
+     * Récupère toutes les contributions d'un cadeau depuis l'API.
      */
-    public Optional<Contribution> createContribution(Contribution contrib, int giftId, User user) {
-        String url = ConfigLoad.API_BASE_URL + "gifts/" + giftId + "/contributions";
+    public List<Contribution> findAllByGiftId(int giftId) {
+        String baseUrl = ConfigLoad.API_BASE_URL;
+        if (!baseUrl.endsWith("/")) baseUrl += "/";
         
-        try {
-            // Construction manuelle du JSON avec org.json
-            JSONObject json = new JSONObject();
-            json.put("amount", contrib.getAmount());
-            json.put("comment", contrib.getComment());
-            json.put("userId", user.getId()); // On envoie l'ID de l'user connecté
+        // Appel de la route API : /contributions/gift/{id}
+        String url = baseUrl + "contributions/gift/" + giftId;
 
-            HttpRequest request = HttpRequest.newBuilder()
-                    .uri(URI.create(url))
-                    .header("Content-Type", "application/json")
-                    .header("Authorization", "Bearer " + user.getToken()) 
-                    .POST(HttpRequest.BodyPublishers.ofString(json.toString()))
-                    .build();
-
-            HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
-
-            if (response.statusCode() == 201 || response.statusCode() == 200) {
-                JSONObject responseJson = new JSONObject(response.body());
-                return Optional.of(buildContribution(responseJson));
-            } else {
-                System.err.println("API Error " + response.statusCode() + ": " + response.body());
-            }
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-        return Optional.empty();
-    }
-
-    private Contribution buildContribution(JSONObject json) {
-        Contribution c = new Contribution();
-        c.setId(json.getInt("id"));
-        c.setAmount(json.getDouble("amount"));
+        List<Contribution> list = new ArrayList<>();
         
-        if (!json.isNull("contributedAt")) {
-            c.setContributedAt(LocalDateTime.parse(json.getString("contributedAt"))); 
-        }
-        if (!json.isNull("comment")) {
-            c.setComment(json.getString("comment"));
-        }
-        return c;
-    }
-
-    @Override
-    public Contribution find(int id) {
-        String url = ConfigLoad.API_BASE_URL + "contributions/" + id;
         try {
             HttpRequest request = HttpRequest.newBuilder()
                     .uri(URI.create(url))
@@ -80,16 +42,88 @@ public class ContributionDAO extends DAO<Contribution> {
             HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
 
             if (response.statusCode() == 200) {
-                return buildContribution(new JSONObject(response.body()));
+                // Parsing du tableau JSON reçu
+                JSONArray array = new JSONArray(response.body());
+                for (int i = 0; i < array.length(); i++) {
+                    list.add(buildContribution(array.getJSONObject(i)));
+                }
             }
         } catch (Exception e) {
             e.printStackTrace();
         }
-        return null;
+        return list;
     }
 
-    // --- Méthodes non utilisées dans ce flux ---
-    @Override public List<Contribution> findAll() { return List.of(); }
+    // ... Ta méthode createContribution (EXISTANTE, ne change pas) ...
+    public Optional<Contribution> createContribution(Contribution contrib, int giftId, User user) {
+        // ... (URL setup) ...
+        
+        try {
+            JSONObject json = new JSONObject();
+            // ATTENTION AUX NOMS DES CLÉS (Doivent matcher les attributs Java côté Serveur)
+            json.put("amount", contrib.getAmount());
+            json.put("comment", contrib.getComment());
+            
+            // C'EST ICI QUE CA SE JOUE :
+            json.put("giftId", giftId);  // Important
+            json.put("userId", user.getId()); // Important
+            
+            // Debug du JSON envoyé
+            System.out.println("DEBUG CLIENT DAO: Envoi JSON -> " + json.toString());
+
+            HttpRequest request = HttpRequest.newBuilder()
+                    // ... (headers) ...
+                    .POST(HttpRequest.BodyPublishers.ofString(json.toString()))
+                    .build();
+
+            HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
+            
+            // AJOUTE CE LOG :
+            System.out.println("DEBUG CLIENT DAO: Réponse API -> Code: " + response.statusCode() + " | Body: " + response.body());
+
+            // ... (reste du code)
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return Optional.empty();
+    }
+
+    // Méthode utilitaire de mapping
+    private Contribution buildContribution(JSONObject json) {
+        Contribution c = new Contribution();
+        
+        // Utilise optInt/optDouble pour éviter les crashs si la valeur manque
+        c.setId(json.optInt("id")); 
+        c.setAmount(json.optDouble("amount"));
+        
+        // Gestion sécurisée de la date
+        if (!json.isNull("contributedAt")) {
+            // On récupère l'objet, on le transforme en String, et on parse
+            // Cela protège contre le cas où ce n'est pas strictement un objet String JSON
+            String dateStr = json.get("contributedAt").toString();
+            
+            // On nettoie les guillemets éventuels si toString() en ajoute
+            dateStr = dateStr.replace("\"", "");
+
+            try {
+                // Si le serveur envoie un tableau [2025,12...], le parse va échouer ici
+                // Mais grâce à l'étape 1 (Serveur), dateStr sera bien "2025-12-..."
+                c.setContributedAt(LocalDateTime.parse(dateStr)); 
+            } catch (Exception e) {
+                System.err.println("Erreur parsing date contribution: " + dateStr);
+            }
+        }
+        
+        if (!json.isNull("comment")) {
+            c.setComment(json.optString("comment"));
+        }
+        
+        return c;
+    }
+
+    // Méthodes abstraites non utilisées ici
+    @Override public Contribution find(int id) { return null; }
+    @Override public List<Contribution> findAll() { return null; }
     @Override public boolean create(Contribution obj) { return false; }
     @Override public boolean delete(Contribution obj) { return false; }
     @Override public boolean update(Contribution obj) { return false; }

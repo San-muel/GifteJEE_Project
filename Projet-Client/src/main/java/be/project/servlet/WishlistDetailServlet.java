@@ -1,41 +1,59 @@
 package be.project.servlet;
 
+import be.project.DAO.ContributionDAO;
+import be.project.DAO.WishlistDAO;
+import be.project.MODEL.Contribution;
+import be.project.MODEL.Gift;
 import be.project.MODEL.Wishlist;
+
 import javax.servlet.ServletException;
 import javax.servlet.annotation.WebServlet;
-import javax.servlet.http.HttpServlet;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
+import javax.servlet.http.*;
 import java.io.IOException;
+import java.util.List;
 
 @WebServlet("/wishlistDetail")
 public class WishlistDetailServlet extends HttpServlet {
-	private static final long serialVersionUID = 3020048919194754366L;
-	
-	protected void doGet(HttpServletRequest request, HttpServletResponse response) 
-	        throws ServletException, IOException {
-	    
-	    String idParam = request.getParameter("id");
-	    
-	    if (idParam != null && !idParam.isEmpty()) {
-	        try {
-	            int id = Integer.parseInt(idParam);
-	            System.out.println("[DETAIL] Appel du modèle pour la wishlist ID : " + id);
-	            
-	            Wishlist wl = Wishlist.find(id);
-	            
-	            if (wl != null) {
-	                request.setAttribute("selectedWishlist", wl);
-	            } else {
-	                request.setAttribute("error", "La liste demandée est introuvable.");
-	            }
-	            
-	        } catch (NumberFormatException e) {
-	            System.err.println("[DETAIL] Format d'ID invalide : " + idParam);
-	        }
-	    }
+    
+    private static final long serialVersionUID = 1L;
+    private final WishlistDAO wishlistDAO = new WishlistDAO();
+    private final ContributionDAO contributionDAO = new ContributionDAO(); 
 
-	    // Forward vers la JSP de détail
-	    request.getRequestDispatcher("/WEB-INF/Vues/Home/wishlistDetail.jsp").forward(request, response);
-	}
+    protected void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
+        try {
+            String idParam = request.getParameter("id");
+            if (idParam == null || idParam.isEmpty()) {
+                response.sendRedirect(request.getContextPath() + "/home");
+                return;
+            }
+            int id = Integer.parseInt(idParam);
+
+            // 1. Récupérer la Wishlist
+            Wishlist wishlist = wishlistDAO.find(id); 
+
+            if (wishlist == null) {
+                response.sendError(HttpServletResponse.SC_NOT_FOUND, "Liste introuvable");
+                return;
+            }
+
+            // 2. BOUCLE MAGIQUE : Remplir les contributions pour chaque cadeau
+            if (wishlist.getGifts() != null) {
+                for (Gift gift : wishlist.getGifts()) {
+                    // Appel API pour récupérer les participations de ce cadeau
+                    List<Contribution> listContribs = contributionDAO.findAllByGiftId(gift.getId());
+                    
+                    // On donne la liste au cadeau (il fera les calculs tout seul)
+                    gift.setContributions(listContribs);
+                }
+            }
+
+            // 3. Envoyer à la JSP
+            request.setAttribute("selectedWishlist", wishlist);
+            request.getRequestDispatcher("/WEB-INF/Vues/Home/wishlistDetail.jsp").forward(request, response);
+
+        } catch (Exception e) {
+            e.printStackTrace();
+            response.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
+        }
+    }
 }
