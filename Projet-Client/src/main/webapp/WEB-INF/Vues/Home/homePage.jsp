@@ -68,6 +68,30 @@
         }
         
         .header h1 { border: none; margin: 0; }
+        
+        /* Style pour les cartes désactivées (INACTIVE ou EXPIRED) */
+		.card-disabled {
+		    background-color: #f0f0f0 !important;
+		    border-top: 5px solid #bdc3c7 !important; /* Gris au lieu du turquoise */
+		    color: #95a5a6;
+		    cursor: not-allowed !important; /* Curseur "interdit" */
+		    filter: grayscale(100%);
+		    opacity: 0.7;
+		    transform: none !important; /* Pas d'effet de levée au survol */
+		    box-shadow: none !important;
+		}
+		
+		.status-badge {
+		    font-size: 0.8em;
+		    padding: 2px 8px;
+		    border-radius: 4px;
+		    font-weight: bold;
+		    display: inline-block;
+		    margin-bottom: 10px;
+		}
+		
+		.badge-expired { background: #e74c3c; color: white; }
+		.badge-inactive { background: #95a5a6; color: white; }
     </style>
 </head>
 <body class="home-body">
@@ -90,32 +114,45 @@
             </c:if>
         </div>
     </div>
-
-    <main class="grid">
-        <c:forEach var="list" items="${wishlists}">
-            <div class="card" onclick="checkAccess(${list.id})">
-                <h3><c:out value="${list.title}" /></h3>
-                <p>Occasion: <c:out value="${list.occasion}" /></p>
-                <small>Expire le: <c:out value="${list.expirationDate}" /></small>
-            </div>
-        </c:forEach>
-    </main>
+	
+	<main class="grid">
+	    <c:forEach var="list" items="${wishlists}">
+	        <%-- On prépare une classe CSS si le statut n'est pas ACTIVE --%>
+	        <c:set var="isDisabled" value="${list.status != 'ACTIVE'}" />
+	        
+	        <div class="card ${isDisabled ? 'card-disabled' : ''}" 
+	             onclick="checkAccess(${list.id}, '${list.status}')">
+	            
+	            <c:if test="${isDisabled}">
+	                <span class="status-badge ${list.status == 'EXPIRED' ? 'badge-expired' : 'badge-inactive'}">
+	                    <c:out value="${list.status}" />
+	                </span>
+	            </c:if>
+	            
+	            <h3><c:out value="${list.title}" /></h3>
+	            <p>Occasion: <c:out value="${list.occasion}" /></p>
+	            <small>Expire le: <c:out value="${list.expirationDate}" /></small>
+	        </div>
+	    </c:forEach>
+	</main>
 
     <script>
-    function checkAccess(id) {
-        // On force le rendu en texte "true" ou "false" pour JS
-        const isConnected = <%= (session.getAttribute("user") != null) %>;
-        
-        console.log("JS DEBUG - Connecté ? " + isConnected + " | ID Liste: " + id);
-        
-        if (isConnected) {
-            // Redirection vers le DETAIL de la liste cliquée
-            window.location.href = "${pageContext.request.contextPath}/wishlistDetail?id=" + id;
-        } else {
-            alert("Veuillez vous connecter pour voir les cadeaux de cette liste.");
-            window.location.href = "${pageContext.request.contextPath}/auth";
-        }
-    }
+	    function checkAccess(id, status) {
+	        // 1. Bloquer immédiatement si le statut n'est pas ACTIVE
+	        if (status !== 'ACTIVE') {
+	            alert("Cette liste est actuellement " + status.toLowerCase() + " et n'est pas consultable.");
+	            return; // On arrête l'exécution ici
+	        }
+			
+	        const isConnected = <%= (session.getAttribute("user") != null) %>;
+	        
+	        if (isConnected) {
+	            window.location.href = "${pageContext.request.contextPath}/wishlistDetail?id=" + id;
+	        } else {
+	            alert("Veuillez vous connecter pour voir les cadeaux de cette liste.");
+	            window.location.href = "${pageContext.request.contextPath}/auth";
+	        }
+	    }
     </script>
 
 </body>

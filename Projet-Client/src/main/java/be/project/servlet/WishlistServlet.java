@@ -1,6 +1,7 @@
 package be.project.servlet;
 
 import be.project.DAO.WishlistDAO;
+import be.project.MODEL.Status;
 import be.project.MODEL.User;
 import be.project.MODEL.Wishlist;
 
@@ -110,10 +111,20 @@ public class WishlistServlet extends HttpServlet {
      */
     private Wishlist extract(HttpServletRequest req) {
         Wishlist w = new Wishlist();
-        
+
         w.setTitle(req.getParameter("title"));
         w.setOccasion(req.getParameter("occasion"));
-        w.setStatus(req.getParameter("status"));
+
+        // Conversion String -> enum Status
+        String statusStr = req.getParameter("status");
+        if (statusStr != null && !statusStr.isEmpty()) {
+            try {
+                w.setStatus(Status.valueOf(statusStr.toUpperCase()));
+            } catch (IllegalArgumentException e) {
+                System.err.println("Status invalide : " + statusStr);
+                w.setStatus(null); // ou une valeur par défaut
+            }
+        }
 
         // Gestion de la date (String -> LocalDate)
         String dateStr = req.getParameter("expirationDate");
@@ -122,10 +133,11 @@ public class WishlistServlet extends HttpServlet {
                 w.setExpirationDate(LocalDate.parse(dateStr));
             } catch (DateTimeParseException e) {
                 System.err.println("Erreur format date : " + dateStr);
-                w.setExpirationDate(null); // Ou gérer une date par défaut
+                w.setExpirationDate(null);
             }
         }
-        
+
         return w;
     }
+
 }

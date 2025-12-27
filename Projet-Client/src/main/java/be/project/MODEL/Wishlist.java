@@ -18,7 +18,7 @@ public class Wishlist implements Serializable {
     private String title;
     private String occasion;         
     private LocalDate expirationDate;
-    private String status; 
+    private Status status; 
     private Set<Gift> gifts = new HashSet<>();
     
     @JsonIgnore // Important pour éviter l'erreur 400 lors de l'envoi vers l'API
@@ -27,7 +27,7 @@ public class Wishlist implements Serializable {
     public Wishlist() {}
     
     public Wishlist(int id, String title, String occasion, LocalDate expirationDate,
-            String status) {
+    			Status status) {
 		this();
 		this.id = id;
 		this.title = title;
@@ -68,11 +68,11 @@ public class Wishlist implements Serializable {
         this.expirationDate = expirationDate;
     }
 
-    public String getStatus() {
+    public Status getStatus() {
         return status;
     }
 
-    public void setStatus(String status) {
+    public void setStatus(Status status) {
         this.status = status;
     }
 
@@ -88,6 +88,38 @@ public class Wishlist implements Serializable {
     public static List<Wishlist> findAll() {
         WishlistDAO dao = new WishlistDAO();
         return dao.findAll();
+    }
+ // Dans be.project.MODEL.Wishlist.java
+
+ // Dans be.project.MODEL.Wishlist.java (Côté Client)
+
+    public boolean toggleStatus(User user) {
+        System.out.println("[METIER MODEL] Début de la bascule. Statut actuel : " + this.status);
+        
+        // Comparaison correcte avec l'Enum
+        if (this.status == Status.ACTIVE) {
+            // Si c'est ACTIVE, on passe en INACTIVE (ou PRIVATE selon ton Enum)
+            this.status = Status.INACTIVE; 
+            System.out.println("[METIER MODEL] Passage en INACTIVE.");
+        } else {
+            // Si c'est INACTIVE ou EXPIRED, on vérifie la date pour réactiver
+            if (this.expirationDate != null && this.expirationDate.isAfter(java.time.LocalDate.now())) {
+                this.status = Status.ACTIVE;
+                System.out.println("[METIER MODEL] Date valide ("+this.expirationDate+"), passage en ACTIVE.");
+            } else {
+                // Si la date est passée, on peut forcer le statut EXPIRED
+                this.status = Status.EXPIRED;
+                System.out.println("[METIER MODEL] ECHEC : Date expirée ou nulle, statut mis à EXPIRED.");
+            }
+        }
+
+        // Persistance vers l'API
+        System.out.println("[ACTIVE RECORD] Envoi de la mise à jour vers le DAO...");
+        WishlistDAO dao = new WishlistDAO();
+        boolean success = dao.updateWishlist(this, user);
+        
+        System.out.println("[ACTIVE RECORD] Résultat de l'update API : " + (success ? "SUCCÈS" : "ÉCHEC"));
+        return success;
     }
     
     public User getOwner() {

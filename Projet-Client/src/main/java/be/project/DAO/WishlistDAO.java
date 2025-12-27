@@ -114,8 +114,10 @@ public class WishlistDAO extends DAO<Wishlist> {
         String baseUrl = ConfigLoad.API_BASE_URL;
         if (!baseUrl.endsWith("/")) baseUrl += "/";
         String url = baseUrl + "wishlists/" + wishlist.getId();
+        System.out.println("DEBUG URL APPELE: " + url);
         
         try {
+	        	
             String jsonBody = objectMapper.writeValueAsString(wishlist);
 
             HttpRequest request = HttpRequest.newBuilder()
