@@ -84,12 +84,17 @@ public class GiftServlet extends HttpServlet {
         Gift g = new Gift();
         g.setName(req.getParameter("name"));
         g.setDescription(req.getParameter("description"));
-        // Utilisation de Double.parseDouble avec gestion d'erreur possible selon ton besoin
+        
         String priceStr = req.getParameter("price");
         g.setPrice(priceStr != null ? Double.parseDouble(priceStr) : 0.0);
+        
         g.setPhotoUrl(req.getParameter("photoUrl"));
+
+        g.setSiteUrl(req.getParameter("siteUrl")); 
+        
         String p = req.getParameter("priority");
         g.setPriority((p != null && !p.isEmpty()) ? Integer.parseInt(p) : null);
+        
         return g;
     }
 }
