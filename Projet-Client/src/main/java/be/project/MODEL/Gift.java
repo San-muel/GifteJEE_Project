@@ -31,6 +31,10 @@ public class Gift implements Serializable {
         }
         return false;
     }
+    
+    public boolean updatePriority(int wishlistId, User user, GiftDAO giftDAO) {
+        return giftDAO.updatePriority(this, wishlistId, user);
+    }
 
     public boolean update(int wishlistId, User user, GiftDAO giftDAO) {
         return giftDAO.updateGift(this, wishlistId, user);
@@ -84,5 +88,10 @@ public class Gift implements Serializable {
     public double getRemainingAmount() {
         double remaining = this.price - getCollectedAmount();
         return Math.max(0, remaining); // Empêche les nombres négatifs
+    }
+    @JsonIgnore
+    public boolean isReadOnly() {
+        // Si le montant collecté est > 0, il est choisi (partiellement ou totalement)
+        return getCollectedAmount() > 0;
     }
 }

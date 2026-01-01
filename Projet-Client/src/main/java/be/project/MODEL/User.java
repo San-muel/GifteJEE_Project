@@ -169,4 +169,18 @@ public class User implements Serializable {
         }
         this.createdWishlists.add(wishlist);
     }
+    
+    public void refresh() {
+        // On appelle le DAO pour récupérer les données fraîches depuis l'API
+        // On suppose que l'API /users/{id} renvoie l'utilisateur avec ses listes et cadeaux à jour
+        User freshData = userDAO.find(this.id); 
+        
+        if (freshData != null) {
+            this.username = freshData.getUsername();
+            this.email = freshData.getEmail();
+            this.createdWishlists = freshData.getCreatedWishlists();
+            this.WishlistPartager = freshData.getSharedWishlists();
+            this.InfoWishlist = freshData.getSharedWishlistInfos();
+        }
+    }
 }

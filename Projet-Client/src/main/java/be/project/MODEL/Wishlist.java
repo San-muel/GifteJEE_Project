@@ -20,10 +20,6 @@ public class Wishlist implements Serializable {
     private LocalDate expirationDate;
     private Status status; 
     private Set<Gift> gifts = new HashSet<>();
-    
-    @JsonIgnore // Important pour éviter l'erreur 400 lors de l'envoi vers l'API
-    private User owner;
-
     public Wishlist() {}
     
     public Wishlist(int id, String title, String occasion, LocalDate expirationDate,
@@ -120,14 +116,6 @@ public class Wishlist implements Serializable {
         
         System.out.println("[ACTIVE RECORD] Résultat de l'update API : " + (success ? "SUCCÈS" : "ÉCHEC"));
         return success;
-    }
-    
-    public User getOwner() {
-        return owner;
-    }
-
-    public void setOwner(User user) {
-        this.owner = user;
     }
     
     @Override
