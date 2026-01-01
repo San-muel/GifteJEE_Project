@@ -18,7 +18,8 @@ public class Gift implements Serializable {
     private double price;
     private Integer priority;  
     private String photoUrl;
-    private Set<Contribution> contributions = new HashSet<>();
+    private String siteUrl;
+	private Set<Contribution> contributions = new HashSet<>();
 
 	public Gift() {}
     
@@ -29,6 +30,10 @@ public class Gift implements Serializable {
             return true;
         }
         return false;
+    }
+    
+    public boolean updatePriority(int wishlistId, User user, GiftDAO giftDAO) {
+        return giftDAO.updatePriority(this, wishlistId, user);
     }
 
     public boolean update(int wishlistId, User user, GiftDAO giftDAO) {
@@ -52,6 +57,8 @@ public class Gift implements Serializable {
     public void setPriority(Integer priority) { this.priority = priority; }
     public String getPhotoUrl() { return photoUrl; }
     public void setPhotoUrl(String photoUrl) { this.photoUrl = photoUrl; }
+    public String getSiteUrl() {return siteUrl;}
+    public void setSiteUrl(String siteUrl) {this.siteUrl = siteUrl;}
     
     public Set<Contribution> getContributions() {
 		return contributions;
@@ -81,5 +88,10 @@ public class Gift implements Serializable {
     public double getRemainingAmount() {
         double remaining = this.price - getCollectedAmount();
         return Math.max(0, remaining); // Empêche les nombres négatifs
+    }
+    @JsonIgnore
+    public boolean isReadOnly() {
+        // Si le montant collecté est > 0, il est choisi (partiellement ou totalement)
+        return getCollectedAmount() > 0;
     }
 }

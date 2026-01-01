@@ -118,5 +118,25 @@ public class UserDAO extends DAO<User> {
     }
     @Override public boolean delete(User obj) { return false; }
     @Override public boolean update(User obj) { return false; }
-    @Override public User find(int id) { return null; }
+    @Override 
+    public User find(int id) {
+        try {
+            String url = getCleanBaseUrl() + "/users/" + id;
+            
+            HttpRequest request = HttpRequest.newBuilder()
+                    .uri(URI.create(url))
+                    .header("Accept", "application/json")
+                    .GET()
+                    .build();
+
+            HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
+
+            if (response.statusCode() == 200) {
+                return objectMapper.readValue(response.body(), User.class);
+            }
+        } catch (Exception e) {
+            System.err.println("ERREUR REST UserDAO.find: " + e.getMessage());
+        }
+        return null;
+    }
 }

@@ -61,7 +61,7 @@ public class DashboardServlet extends HttpServlet {
                 for (Wishlist wl : user.getSharedWishlists()) {
                     
                     // On ne traite que les listes ACTIVES qui contiennent des cadeaux
-                    if ("ACTIVE".equals(wl.getStatus()) && wl.getGifts() != null) {
+                    if ("ACTIVE".equals(wl.getStatus().toString()) && wl.getGifts() != null) {
                         for (Gift gift : wl.getGifts()) {
                             
                             // A. CORRECTION BUG AFFICHAGE :

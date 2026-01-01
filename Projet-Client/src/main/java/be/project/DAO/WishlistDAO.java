@@ -114,8 +114,10 @@ public class WishlistDAO extends DAO<Wishlist> {
         String baseUrl = ConfigLoad.API_BASE_URL;
         if (!baseUrl.endsWith("/")) baseUrl += "/";
         String url = baseUrl + "wishlists/" + wishlist.getId();
+        System.out.println("DEBUG URL APPELE: " + url);
         
         try {
+	        	
             String jsonBody = objectMapper.writeValueAsString(wishlist);
 
             HttpRequest request = HttpRequest.newBuilder()
@@ -164,29 +166,46 @@ public class WishlistDAO extends DAO<Wishlist> {
             String baseUrl = ConfigLoad.API_BASE_URL;
             if (baseUrl.endsWith("/")) baseUrl = baseUrl.substring(0, baseUrl.length() - 1);
             
-            // IMPORTANT : On pointe vers /wishlists/all qui est publique
             String url = baseUrl + "/wishlists/all";
             
-            System.out.println("[DEBUG CLIENT DAO] Récupération publique sur : " + url);
+            System.out.println("\n[DEBUG WIWIWW CLIENT DAO] --- DÉBUT APPEL API ---");
+            System.out.println("[DEBUG CLIENT DAO] URL : " + url);
 
             HttpRequest request = HttpRequest.newBuilder()
                     .uri(URI.create(url))
                     .header("Accept", "application/json")
-                    // PAS DE HEADER AUTHORIZATION ICI
                     .GET()
                     .build();
 
             HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
 
+            System.out.println("[DEBUG CLIENT DAO] Status Code : " + response.statusCode());
+
             if (response.statusCode() == 200) {
-                return objectMapper.readValue(response.body(), 
+                String jsonBrut = response.body();
+                
+                // --- PRINT CRUCIAL : Analyse ce qui s'affiche ici dans ta console ---
+                System.out.println("[DEBUG CLIENT DAO] JSON REÇU DU SERVEUR :");
+                System.out.println(jsonBrut);
+                System.out.println("[DEBUG CLIENT DAO] ----------------------------\n");
+
+                List<Wishlist> wishlists = objectMapper.readValue(jsonBrut, 
                         objectMapper.getTypeFactory().constructCollectionType(List.class, Wishlist.class));
+
+                // Petit test sur le premier cadeau de la première liste pour vérifier la conversion
+                if (!wishlists.isEmpty() && !wishlists.get(0).getGifts().isEmpty()) {
+                    String testUrl = wishlists.get(0).getGifts().iterator().next().getSiteUrl();
+                    System.out.println("[DEBUG CLIENT DAO] Test conversion Gift(0).siteUrl : " + testUrl);
+                }
+
+                return wishlists;
             } else {
                 System.err.println("[DEBUG CLIENT DAO] Erreur findAll, Status : " + response.statusCode());
+                System.err.println("[DEBUG CLIENT DAO] Corps de l'erreur : " + response.body());
                 return null;
             }
         } catch (Exception e) {
-            System.err.println("[DEBUG CLIENT DAO] ERREUR findAll : " + e.getMessage());
+            System.err.println("[DEBUG CLIENT DAO] ERREUR CRITIQUE findAll : " + e.getMessage());
             e.printStackTrace();
             return null;
         }

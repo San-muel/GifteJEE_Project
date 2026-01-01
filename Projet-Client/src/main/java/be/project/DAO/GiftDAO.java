@@ -67,6 +67,31 @@ public class GiftDAO extends DAO<Gift> {
             return false;
         }
     }
+    
+    public boolean updatePriority(Gift gift, int wishlistId, User user) {
+        // URI RESTful : la priorité est une propriété de la ressource Gift
+        String url = ConfigLoad.API_BASE_URL + "wishlists/" + wishlistId + "/gifts/" + gift.getId() + "/priority";
+        
+        try {
+            // On envoie un JSON simple contenant uniquement la nouvelle valeur
+            String jsonBody = "{\"priority\": " + gift.getPriority() + "}";
+
+            HttpRequest request = HttpRequest.newBuilder()
+                    .uri(URI.create(url))
+                    .header("Content-Type", "application/json")
+                    .header("Authorization", "Bearer " + user.getToken()) 
+                    .PUT(HttpRequest.BodyPublishers.ofString(jsonBody))
+                    .build();
+
+            HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
+            
+            // REST : 200 OK ou 204 No Content pour une mise à jour réussie
+            return response.statusCode() == 200 || response.statusCode() == 204;
+        } catch (Exception e) {
+            System.err.println("[CLIENT DAO] Erreur REST Priority: " + e.getMessage());
+            return false;
+        }
+    }
 
     // DELETE : /wishlists/{wishlistId}/gifts/{giftId}
     public boolean deleteGift(int giftId, int wishlistId, User user) {

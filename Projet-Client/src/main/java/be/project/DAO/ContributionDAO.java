@@ -23,36 +23,50 @@ public class ContributionDAO extends DAO<Contribution> {
     /**
      * Récupère toutes les contributions d'un cadeau depuis l'API.
      */
-    public List<Contribution> findAllByGiftId(int giftId) {
-        String baseUrl = ConfigLoad.API_BASE_URL;
-        if (!baseUrl.endsWith("/")) baseUrl += "/";
-        
-        // Appel de la route API : /contributions/gift/{id}
-        String url = baseUrl + "contributions/gift/" + giftId;
-
-        List<Contribution> list = new ArrayList<>();
-        
-        try {
-            HttpRequest request = HttpRequest.newBuilder()
-                    .uri(URI.create(url))
-                    .header("Accept", "application/json")
-                    .GET()
-                    .build();
-
-            HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
-
-            if (response.statusCode() == 200) {
-                // Parsing du tableau JSON reçu
-                JSONArray array = new JSONArray(response.body());
-                for (int i = 0; i < array.length(); i++) {
-                    list.add(buildContribution(array.getJSONObject(i)));
-                }
-            }
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-        return list;
-    }
+	public List<Contribution> findAllByGiftId(int giftId) {
+	    System.out.println("[DEBUG-DAO] >>> Entrée findAllByGiftId pour ID cadeau : " + giftId);
+	
+	    String baseUrl = ConfigLoad.API_BASE_URL;
+	    if (!baseUrl.endsWith("/")) baseUrl += "/";
+	    
+	    // Appel de la route API : /contributions/gift/{id}
+	    String url = baseUrl + "contributions/gift/" + giftId;
+	    System.out.println("[DEBUG-DAO] URL générée : " + url);
+	
+	    List<Contribution> list = new ArrayList<>();
+	    
+	    try {
+	        HttpRequest request = HttpRequest.newBuilder()
+	                .uri(URI.create(url))
+	                .header("Accept", "application/json")
+	                .GET()
+	                .build();
+	
+	        HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
+	
+	        System.out.println("[DEBUG-DAO] Code statut HTTP reçu : " + response.statusCode());
+	
+	        if (response.statusCode() == 200) {
+	            String rawBody = response.body();
+	            System.out.println("[DEBUG-DAO] Contenu JSON brut : " + rawBody);
+	
+	            JSONArray array = new JSONArray(rawBody);
+	            System.out.println("[DEBUG-DAO] Nombre d'objets dans le tableau JSON : " + array.length());
+	
+	            for (int i = 0; i < array.length(); i++) {
+	                list.add(buildContribution(array.getJSONObject(i)));
+	            }
+	        } else {
+	            System.out.println("[DEBUG-DAO] ATTENTION : L'appel API a échoué (Status != 200).");
+	        }
+	    } catch (Exception e) {
+	        System.out.println("[DEBUG-DAO] ERREUR CRITIQUE lors de l'appel API : " + e.getMessage());
+	        e.printStackTrace();
+	    }
+	    
+	    System.out.println("[DEBUG-DAO] <<< Sortie findAllByGiftId. Taille liste retournée : " + list.size());
+	    return list;
+	}
 
     // ... Ta méthode createContribution (EXISTANTE, ne change pas) ...
     /**
