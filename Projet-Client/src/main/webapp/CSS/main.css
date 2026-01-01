@@ -438,3 +438,22 @@ li:hover {
     background-color: #389B95;
     box-shadow: 0 4px 10px rgba(64, 181, 173, 0.3);
 }
+
+
+.btn-reserve { 
+    background-color: #673ab7; 
+    color: white; 
+    border: none; 
+    padding: 8px 15px; 
+    border-radius: 4px; 
+    cursor: pointer; 
+}
+.btn-reserve:disabled { 
+    background-color: #ccc; 
+    cursor: not-allowed; 
+}
+.gift-status-info {
+    font-size: 0.85em;
+    color: #666;
+    margin-bottom: 5px;
+}

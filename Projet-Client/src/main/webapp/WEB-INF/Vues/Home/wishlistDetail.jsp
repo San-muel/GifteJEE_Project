@@ -13,8 +13,12 @@
         .gift-item { display: flex; align-items: center; gap: 20px; padding: 15px; border-bottom: 1px solid #eee; background: white; margin-bottom: 10px; border-radius: 8px; flex-wrap: wrap; }
         .gift-details { flex-grow: 1; min-width: 200px; }
         .input-amount { padding: 5px; width: 80px; border-radius: 4px; border: 1px solid #ccc; }
+        
+        /* Boutons */
+        .btn-contribute { background-color: #4caf50; color: white; border: none; padding: 8px 12px; border-radius: 4px; cursor: pointer; font-weight: bold; }
+        .btn-reserve { background-color: #2196F3; color: white; border: none; padding: 8px 12px; border-radius: 4px; cursor: pointer; font-weight: bold; margin-left: 5px; }
         .btn-submit-contribution { background-color: #4caf50; color: white; border: none; padding: 5px 10px; border-radius: 4px; cursor: pointer; }
-        .btn-completed { background-color: #ccc; cursor: not-allowed; color: #666; padding: 5px 10px; border:none; border-radius: 4px;}
+        .btn-completed { background-color: #ccc; cursor: not-allowed; color: #666; padding: 8px 12px; border:none; border-radius: 4px;}
         
         /* Styles Barre de progression */
         .progress-container { width: 100%; background-color: #e0e0e0; border-radius: 10px; margin: 10px 0; height: 10px; overflow: hidden; }
@@ -22,6 +26,9 @@
         .amount-info { font-size: 0.9em; color: #555; display: flex; justify-content: space-between; }
         .missing-amount { color: #d32f2f; font-weight: bold; }
         .fully-funded { color: #4caf50; font-weight: bold; }
+
+        .gift-action-area { display: flex; flex-direction: column; align-items: flex-end; gap: 5px; }
+        .button-group { display: flex; gap: 10px; }
     </style>
 </head>
 <body class="home-body">
@@ -75,9 +82,24 @@
                             <div class="gift-action-area">
                                 <c:choose>
                                     <c:when test="${gift.remainingAmount > 0.01}">
-                                        <button class="btn-contribute" onclick="toggleContributionForm(${gift.id})">
-                                            💰 Participer
-                                        </button>
+                                        <div class="button-group">
+                                            <button class="btn-contribute" onclick="toggleContributionForm(${gift.id})">
+                                                💰 Participer
+                                            </button>
+
+                                            <%-- Bouton RÉSERVER : n'apparaît que si aucune contribution n'a été faite --%>
+                                            <c:if test="${gift.collectedAmount <= 0}">
+                                                <form action="${pageContext.request.contextPath}/contribution/add" method="POST" style="display:inline;">
+                                                    <input type="hidden" name="giftId" value="${gift.id}">
+                                                    <input type="hidden" name="wishlistId" value="${selectedWishlist.id}">
+                                                    <input type="hidden" name="amount" value="${gift.price}">
+                                                    <input type="hidden" name="comment" value="Cadeau réservé entièrement !">
+                                                    <button type="submit" class="btn-reserve" onclick="return confirm('Voulez-vous réserver ce cadeau en payant la totalité (${gift.price}€) ?')">
+                                                        🎁 Réserver
+                                                    </button>
+                                                </form>
+                                            </c:if>
+                                        </div>
                                         
                                         <div id="form-contribution-${gift.id}" class="contribution-box">
                                             <form action="${pageContext.request.contextPath}/contribution/add" method="POST">
