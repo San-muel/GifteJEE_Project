@@ -12,7 +12,6 @@ public class SharedWishlist implements Serializable {
     private LocalDateTime sharedAt;  
     private String notification;       
     
-    // On garde ton DAO existant
     private static final WishlistDAO wishlistDAO = new WishlistDAO();
 
     public SharedWishlist() {}
@@ -32,20 +31,22 @@ public class SharedWishlist implements Serializable {
     public void setNotification(String notification) { this.notification = notification; }
 
     /**
-     * Correction : Ajout du paramètre 'message' pour ne pas perdre la saisie utilisateur
+     * Méthode principale de partage
      */
-    public boolean shareWishlist(int wishlistId, int targetUserId, String message) {
-        // On met à jour l'attribut de l'instance au cas où on en aurait besoin
-        this.notification = message;
+    public boolean shareWishlist(int wishlistId, int targetUserId, String note, String token) {
+        // 1. On stocke la note dans l'objet actuel
+        this.notification = note;
         
-        // On transmet le message au DAO pour qu'il soit inséré en base de données
-        // Assure-toi que wishlistDAO.share accepte (int, int, String)
-        return wishlistDAO.share(wishlistId, targetUserId, message); 
+        // 2. On appelle le DAO avec TOUS les paramètres, y compris le TOKEN
+        // Note: Assure-toi que ton WishlistDAO possède bien la méthode share(int, int, String, String)
+        return wishlistDAO.share(wishlistId, targetUserId, note, token); 
     }
     
-    // Overload pour garder la compatibilité si nécessaire
-    public boolean shareWishlist(int wishlistId, int targetUserId) {
-        return this.shareWishlist(wishlistId, targetUserId, null);
+    /**
+     * Surcharge (Overload) pour la compatibilité : appelle la méthode principale avec note null
+     */
+    public boolean shareWishlist(int wishlistId, int targetUserId, String token) {
+        return this.shareWishlist(wishlistId, targetUserId, null, token);
     }
 
     @Override

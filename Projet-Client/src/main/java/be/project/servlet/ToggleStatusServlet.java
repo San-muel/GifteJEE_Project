@@ -15,38 +15,31 @@ import be.project.MODEL.Wishlist;
  */
 @WebServlet("/wishlist/toggleStatus")
 public class ToggleStatusServlet extends HttpServlet {
-    
-	// Dans be.project.servlet.ToggleStatusServlet.java
 
-	protected void doPost(HttpServletRequest request, HttpServletResponse response) 
-	        throws ServletException, IOException {
-	    
-	    User currentUser = (User) request.getSession().getAttribute("user");
-	    String idParam = request.getParameter("wishlistId");
+    protected void doPost(HttpServletRequest request, HttpServletResponse response) 
+            throws ServletException, IOException {
+        
+        User currentUser = (User) request.getSession().getAttribute("user");
+        String idParam = request.getParameter("wishlistId");
 
-	    if (currentUser != null && idParam != null) {
-	        int wishlistId = Integer.parseInt(idParam);
-	        Wishlist wl = Wishlist.find(wishlistId);
-	        
-	        if (wl != null) {
-	            // 1. Exécuter la modification
-	            boolean hasChanged = wl.toggleStatus(currentUser);
-	            
-	            // 2. Si succès, synchroniser la SESSION
-	            if (hasChanged) {
-	                System.out.println("[SERVLET] Synchronisation de la session utilisateur...");
-	                
-	                // On cherche la wishlist dans la liste du User et on met à jour son statut
-	                for (Wishlist userWl : currentUser.getCreatedWishlists()) {
-	                    if (userWl.getId() == wishlistId) {
-	                        userWl.setStatus(wl.getStatus()); // On synchronise le nouveau statut
-	                        System.out.println("[SERVLET] Statut mis à jour dans la session pour l'ID " + wishlistId);
-	                        break;
-	                    }
-	                }
-	            }
-	        }
-	    }
-	    response.sendRedirect(request.getContextPath() + "/dashboard");
-	}
+        if (currentUser != null && idParam != null) {
+            try {
+                int wishlistId = Integer.parseInt(idParam);
+                Wishlist wl = Wishlist.find(wishlistId);
+                
+                if (wl != null) {
+                    // 1. Exécuter la modification via le modèle
+                    boolean hasChanged = wl.toggleStatus(currentUser);
+                    
+                    // 2. Synchronisation de la session via le modèle User
+                    if (hasChanged) {
+                        currentUser.updateWishlistStatusLocally(wishlistId, wl.getStatus());
+                    }
+                }
+            } catch (NumberFormatException e) {
+                System.err.println("ID de wishlist invalide");
+            }
+        }
+        response.sendRedirect(request.getContextPath() + "/dashboard");
+    }
 }

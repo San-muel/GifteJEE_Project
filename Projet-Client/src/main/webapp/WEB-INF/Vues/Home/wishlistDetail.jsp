@@ -8,6 +8,7 @@
     <meta charset="UTF-8">
     <title>Détail de la liste - <c:out value="${selectedWishlist.title}" /></title>
     <link rel="stylesheet" href="${pageContext.request.contextPath}/CSS/main.css">
+    <link rel="icon" type="image/png" href="${pageContext.request.contextPath}/assets/logo.png" />
     <style>
         .contribution-box { display: none; margin-top: 10px; padding: 10px; background: #f9f9f9; border-radius: 5px; border: 1px solid #ddd; }
         .gift-item { display: flex; align-items: center; gap: 20px; padding: 15px; border-bottom: 1px solid #eee; background: white; margin-bottom: 10px; border-radius: 8px; flex-wrap: wrap; }

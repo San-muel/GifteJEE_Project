@@ -32,48 +32,57 @@ public class WishlistDAO extends DAO<Wishlist> {
     /**
      * Permet de partager une wishlist avec un autre utilisateur
      */
-	public boolean share(int wishlistId, int targetUserId, String notification) {
-	    try {
-	        String baseUrl = ConfigLoad.API_BASE_URL;
-	        if (baseUrl.endsWith("/")) baseUrl = baseUrl.substring(0, baseUrl.length() - 1);
-	        
-	        String url = baseUrl + "/shared-wishlists";
-	        
-	        System.out.println("[DEBUG CLIENT DAO] URL d'appel : " + url);
-	        
-	        Map<String, Object> data = new HashMap<>();
-	        data.put("wishlistId", wishlistId);
-	        data.put("targetUserId", targetUserId);
-	        
-	        String messageToSend = (notification != null && !notification.trim().isEmpty()) 
-	                               ? notification 
-	                               : "Tu as été invité à consulter ma liste !";
-	        data.put("notification", messageToSend);
-	
-	        String json = objectMapper.writeValueAsString(data);
-	
-	        System.out.println("[DEBUG CLIENT DAO] JSON envoyé : " + json);
-	
-	        HttpRequest request = HttpRequest.newBuilder()
-	                .uri(URI.create(url))
-	                .header("Content-Type", "application/json")
-	                .POST(HttpRequest.BodyPublishers.ofString(json))
-	                .build();
-	
-	        HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
-	        
-	        System.out.println("[DEBUG CLIENT DAO] Réponse reçue : " + response.statusCode());
-	        return response.statusCode() == 201 || response.statusCode() == 200; 
-	    } catch (Exception e) {
-	        System.err.println("[DEBUG CLIENT DAO] ERREUR : " + e.getMessage());
-	        return false;
-	    }
-	}
+	// Ajoute le paramètre token (récupéré depuis la session de l'utilisateur connecté)
+    /**
+     * Permet de partager une wishlist avec un autre utilisateur
+     * @param token Le token JWT (ou l'ID user si pas de JWT)
+     */
+    public boolean share(int wishlistId, int targetUserId, String notification, String token) {
+        try {
+            System.out.println("DEBUG DAO SHARE - Token reçu : " + token);
+            
+            String baseUrl = ConfigLoad.API_BASE_URL;
+            if (baseUrl.endsWith("/")) baseUrl = baseUrl.substring(0, baseUrl.length() - 1);
+            String url = baseUrl + "/shared-wishlists";
+            
+            Map<String, Object> data = new HashMap<>();
+            data.put("wishlistId", wishlistId);
+            data.put("targetUserId", targetUserId);
+            
+            String messageToSend = (notification != null && !notification.trim().isEmpty()) 
+                                   ? notification 
+                                   : "Tu as été invité à consulter ma liste !";
+            data.put("notification", messageToSend);
+
+            String json = objectMapper.writeValueAsString(data);
+
+            // GESTION SÉCURISÉE DU HEADER AUTHORIZATION
+            // Si le token est null, on met une chaîne vide pour éviter le crash
+            String authHeader = (token != null) ? "Bearer " + token : "";
+
+            HttpRequest request = HttpRequest.newBuilder()
+                    .uri(URI.create(url))
+                    .header("Content-Type", "application/json")
+                    .header("Authorization", authHeader) // <--- Envoi correct
+                    .POST(HttpRequest.BodyPublishers.ofString(json))
+                    .build();
+
+            HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
+            
+            System.out.println("[DEBUG DAO] Réponse partage : " + response.statusCode());
+            return response.statusCode() == 201 || response.statusCode() == 200; 
+
+        } catch (Exception e) {
+            System.err.println("[DEBUG DAO] ERREUR PARTAGE : " + e.getMessage());
+            e.printStackTrace();
+            return false;
+        }
+    }
 
     // Garder l'ancienne signature pour la compatibilité si nécessaire
-    public boolean share(int wishlistId, int targetUserId) {
-        return this.share(wishlistId, targetUserId, null);
-    }
+	public boolean share(int wishlistId, int targetUserId, String token) {
+	    return this.share(wishlistId, targetUserId, null, token);
+	}
 
     // --- METHODES DE GESTION WISHLIST (Venant de AddWishlist) ---
 
@@ -166,10 +175,11 @@ public class WishlistDAO extends DAO<Wishlist> {
             String baseUrl = ConfigLoad.API_BASE_URL;
             if (baseUrl.endsWith("/")) baseUrl = baseUrl.substring(0, baseUrl.length() - 1);
             
-            String url = baseUrl + "/wishlists/all";
+            // --- MODIFICATION RESTFUL ICI ---
+            // On utilise le paramètre de requête standard au lieu de /all
+            String url = baseUrl + "/wishlists?filter=public";
             
-            System.out.println("\n[DEBUG WIWIWW CLIENT DAO] --- DÉBUT APPEL API ---");
-            System.out.println("[DEBUG CLIENT DAO] URL : " + url);
+            System.out.println("[DEBUG CLIENT DAO] URL Appelée pour findAll : " + url);
 
             HttpRequest request = HttpRequest.newBuilder()
                     .uri(URI.create(url))
@@ -179,33 +189,15 @@ public class WishlistDAO extends DAO<Wishlist> {
 
             HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
 
-            System.out.println("[DEBUG CLIENT DAO] Status Code : " + response.statusCode());
-
             if (response.statusCode() == 200) {
                 String jsonBrut = response.body();
-                
-                // --- PRINT CRUCIAL : Analyse ce qui s'affiche ici dans ta console ---
-                System.out.println("[DEBUG CLIENT DAO] JSON REÇU DU SERVEUR :");
-                System.out.println(jsonBrut);
-                System.out.println("[DEBUG CLIENT DAO] ----------------------------\n");
-
-                List<Wishlist> wishlists = objectMapper.readValue(jsonBrut, 
+                return objectMapper.readValue(jsonBrut, 
                         objectMapper.getTypeFactory().constructCollectionType(List.class, Wishlist.class));
-
-                // Petit test sur le premier cadeau de la première liste pour vérifier la conversion
-                if (!wishlists.isEmpty() && !wishlists.get(0).getGifts().isEmpty()) {
-                    String testUrl = wishlists.get(0).getGifts().iterator().next().getSiteUrl();
-                    System.out.println("[DEBUG CLIENT DAO] Test conversion Gift(0).siteUrl : " + testUrl);
-                }
-
-                return wishlists;
             } else {
                 System.err.println("[DEBUG CLIENT DAO] Erreur findAll, Status : " + response.statusCode());
-                System.err.println("[DEBUG CLIENT DAO] Corps de l'erreur : " + response.body());
                 return null;
             }
         } catch (Exception e) {
-            System.err.println("[DEBUG CLIENT DAO] ERREUR CRITIQUE findAll : " + e.getMessage());
             e.printStackTrace();
             return null;
         }

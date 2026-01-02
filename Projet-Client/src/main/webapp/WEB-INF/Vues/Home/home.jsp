@@ -8,6 +8,7 @@
     <meta charset="UTF-8">
     <title>Mon Espace Cadeaux</title>
     <link rel="stylesheet" href="${pageContext.request.contextPath}/CSS/main.css">
+    <link rel="icon" type="image/png" href="${pageContext.request.contextPath}/assets/logo.png" />
 </head>
 <body>
 

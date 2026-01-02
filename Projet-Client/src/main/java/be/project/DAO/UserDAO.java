@@ -36,24 +36,30 @@ public class UserDAO extends DAO<User> {
      */
     public User authenticate(String email, String psw) {
         try {
-            // si je fais pas du non RESTful ici 
-        		// je pourrais pas differencier login et get all users
-            String url = getCleanBaseUrl() + "/users/login" 
-                    + "?email=" + URLEncoder.encode(email, StandardCharsets.UTF_8)
-                    + "&psw=" + URLEncoder.encode(psw, StandardCharsets.UTF_8);
+            // CORRECTION REST : On utilise POST sur /users/login
+            String url = getCleanBaseUrl() + "/users/login";
+
+            // On prépare un petit JSON pour les crédentials
+            // (Tu peux utiliser une Map ou un objet User temporaire)
+            java.util.Map<String, String> creds = new java.util.HashMap<>();
+            creds.put("email", email);
+            creds.put("psw", psw); // Le mot de passe part dans le corps (BODY), c'est sécurisé !
+            
+            String jsonBody = objectMapper.writeValueAsString(creds);
 
             HttpRequest request = HttpRequest.newBuilder()
                     .uri(URI.create(url))
+                    .header("Content-Type", "application/json") // On envoie du JSON
                     .header("Accept", "application/json")
-                    .GET()
+                    .POST(HttpRequest.BodyPublishers.ofString(jsonBody)) // VERBE POST
                     .build();
 
             HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
 
             if (response.statusCode() == 200) {
                 return objectMapper.readValue(response.body(), User.class);
-            } else if (response.statusCode() == 401) {
-                System.out.println("DAO DEBUG: Identifiants incorrects (401)");
+            } else {
+                System.out.println("DAO DEBUG: Login échoué code " + response.statusCode());
             }
             return null;
         } catch (Exception e) {

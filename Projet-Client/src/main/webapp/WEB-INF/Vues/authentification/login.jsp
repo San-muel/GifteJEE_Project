@@ -6,6 +6,7 @@
 <title>Authentification</title>
 <link rel="stylesheet" href="${pageContext.request.contextPath}/CSS/main.css">
 <link rel="stylesheet" href="${pageContext.request.contextPath}/CSS/forms.css">
+<link rel="icon" type="image/png" href="${pageContext.request.contextPath}/assets/logo.png" />
 </head>
 <body>
     

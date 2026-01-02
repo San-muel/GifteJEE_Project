@@ -33,21 +33,24 @@ public class ShareServlet extends HttpServlet {
     }
 
 	protected void doPost(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
+	    User currentUser = (User) request.getSession().getAttribute("user");
+	    
+	    // Sécurité de base
+	    if (currentUser == null) {
+	        response.sendError(HttpServletResponse.SC_FORBIDDEN);
+	        return;
+	    }
+
 	    try {
 	        int wishlistId = Integer.parseInt(request.getParameter("wishlistId"));
 	        int targetUserId = Integer.parseInt(request.getParameter("targetUserId"));
-	        String note = request.getParameter("notification"); // On récupère le message
+	        String note = request.getParameter("notification");
 
-	        // Utilisation du modèle SharedWishlist
-	        SharedWishlist shareAction = new SharedWishlist();
-	        
-	        // On utilise la méthode corrigée qui accepte le message
-	        boolean success = shareAction.shareWishlist(wishlistId, targetUserId, note);
+	        boolean success = currentUser.shareMyWishlist(wishlistId, targetUserId, note);
 
 	        if (success) {
-	            response.sendRedirect(request.getContextPath() + "/displayingWG?status=shared");
+	            response.sendRedirect(request.getContextPath() + "/dashboard?status=shared");
 	        } else {
-	            // En cas d'échec, on renvoie vers la page de partage avec l'ID
 	            response.sendRedirect(request.getContextPath() + "/share?wishlistId=" + wishlistId + "&error=failed");
 	        }
 	    } catch (Exception e) {

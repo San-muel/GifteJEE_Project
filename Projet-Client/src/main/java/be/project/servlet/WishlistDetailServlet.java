@@ -18,8 +18,6 @@ import java.util.Set;
 public class WishlistDetailServlet extends HttpServlet {
     
     private static final long serialVersionUID = 1L;
-    private final WishlistDAO wishlistDAO = new WishlistDAO();
-    private final ContributionDAO contributionDAO = new ContributionDAO(); 
 
     protected void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
         try {
@@ -28,27 +26,19 @@ public class WishlistDetailServlet extends HttpServlet {
                 response.sendRedirect(request.getContextPath() + "/home");
                 return;
             }
+            
             int id = Integer.parseInt(idParam);
 
-            // 1. Récupérer la Wishlist
-            Wishlist wishlist = wishlistDAO.find(id); 
+            // 1. Utiliser la méthode statique du Model (Active Record)
+            Wishlist wishlist = Wishlist.find(id); 
 
             if (wishlist == null) {
                 response.sendError(HttpServletResponse.SC_NOT_FOUND, "Liste introuvable");
                 return;
             }
 
-            // 2. BOUCLE MAGIQUE : Remplir les contributions pour chaque cadeau
-            if (wishlist.getGifts() != null) {
-                for (Gift gift : wishlist.getGifts()) {
-                    // Appel API pour récupérer les participations de ce cadeau
-                    List<Contribution> listContribs = contributionDAO.findAllByGiftId(gift.getId());
-                    
-                    Set<Contribution> setContribs = new HashSet<>(listContribs);
-                    // On donne la liste au cadeau (il fera les calculs tout seul)
-                    gift.setContributions(setContribs);
-                }
-            }
+            // 2. On demande au modèle de se compléter
+            wishlist.loadAllGiftsContributions();
 
             // 3. Envoyer à la JSP
             request.setAttribute("selectedWishlist", wishlist);

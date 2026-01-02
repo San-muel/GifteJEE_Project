@@ -7,6 +7,7 @@
     <title>Accueil - GiftManager</title>
     <link rel="stylesheet" href="${pageContext.request.contextPath}/CSS/main.css">
     <link rel="stylesheet" href="${pageContext.request.contextPath}/CSS/forms.css">
+    <link rel="icon" type="image/png" href="${pageContext.request.contextPath}/assets/logo.png" />
     <style>
         /* Correction spécifique pour la page d'accueil car le main.css centre le body */
         .home-body {

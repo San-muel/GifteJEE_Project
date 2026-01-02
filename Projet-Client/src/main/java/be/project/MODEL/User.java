@@ -1,10 +1,9 @@
 package be.project.MODEL;
 
-import be.project.DAO.SharedWishlistDAO;
 import be.project.DAO.UserDAO;
 import be.project.DAO.WishlistDAO;
-
 import java.io.Serializable;
+import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
@@ -18,29 +17,244 @@ public class User implements Serializable {
     private String psw; 
     private String token; 
     
-    
     private Set<Contribution> contributions = new HashSet<>();
     private Set<Wishlist> WishlistPartager = new HashSet<>();
     private Set<Wishlist> createdWishlists = new HashSet<>();
     private Set<SharedWishlist> InfoWishlist = new HashSet<>();
 
-    // DAO pour la persistance REST
     private static final UserDAO userDAO = new UserDAO();
-    
 
     public User() {}
 
-    // --- Méthodes Active Record ---
+    // --- Authentication / Registration ---
+    public static User login(String email, String password) throws Exception {
+        // 1. Validation des données entrantes (Défensif)
+        if (email == null || email.trim().isEmpty() || password == null || password.trim().isEmpty()) {
+            throw new IllegalArgumentException("Veuillez remplir tous les champs.");
+        }
 
-    public User login(String email, String password) throws Exception {
-        return userDAO.authenticate(email, password);
+        // 2. Appel DAO
+        User foundUser = userDAO.authenticate(email, password);
+        
+        // 3. Validation du résultat
+        if (foundUser == null) {
+            throw new IllegalArgumentException("Email ou mot de passe invalide.");
+        }
+        
+        return foundUser;
     }
 
     public boolean register() {
         if (this.email == null || this.email.isEmpty()) return false;
         return userDAO.create(this);
     }
+    
+    public User completeRegistration(String password, Integer pendingWishlistId) throws Exception {
+        if (!this.register()) return null; 
+        User loggedUser = this.login(this.email, password);
+        if (loggedUser != null && pendingWishlistId != null) {
+            boolean shared = loggedUser.acceptPublicInvitation(pendingWishlistId);
+            if (shared) loggedUser.refresh(); 
+        }
+        return loggedUser;
+    }
 
+    public void syncContributionAddition(Contribution c) {
+        if (this.contributions == null) {
+            this.contributions = new HashSet<>();
+        }
+        this.contributions.add(c);
+        System.out.println("[USER MEMORY] Contribution ajoutée à la session utilisateur.");
+    }
+    
+    // --- Gestion des Wishlists (Métier) ---
+    
+    public boolean createWishlist(String title, String occasion, String statusStr, String dateStr) {
+        Wishlist toCreate = Wishlist.fromForm(title, occasion, statusStr, dateStr);
+        WishlistDAO dao = new WishlistDAO();
+        java.util.Optional<Wishlist> created = dao.createWishlist(toCreate, this);
+        if (created.isPresent()) {
+            this.addWishlistLocally(created.get());
+            return true;
+        }
+        return false;
+    }
+
+    public boolean deleteWishlist(int wishlistId) {
+        WishlistDAO dao = new WishlistDAO();
+        boolean success = dao.deleteWishlist(wishlistId, this);
+        if (success) {
+            this.createdWishlists.removeIf(w -> w.getId() == wishlistId);
+        }
+        return success;
+    }
+
+    public boolean updateWishlist(int id, String title, String occasion, String statusStr, String dateStr) {
+        Wishlist toUpdate = Wishlist.fromForm(title, occasion, statusStr, dateStr);
+        toUpdate.setId(id);
+        WishlistDAO dao = new WishlistDAO();
+        boolean success = dao.updateWishlist(toUpdate, this);
+        if (success) {
+            this.createdWishlists.removeIf(w -> w.getId() == id);
+            this.createdWishlists.add(toUpdate);
+        }
+        return success;
+    }
+    
+    public void updateWishlistStatusLocally(int wishlistId, Status newStatus) {
+        // Vérification de sécurité pour éviter les NullPointerException
+        if (this.createdWishlists == null) return;
+
+        // On parcourt les listes de l'utilisateur en mémoire
+        for (Wishlist w : this.createdWishlists) {
+            if (w.getId() == wishlistId) {
+                // On a trouvé la liste, on met à jour son statut
+                w.setStatus(newStatus);
+                System.out.println("[USER MEMORY] Statut mis à jour localement pour la liste " + wishlistId);
+                break; // On arrête la boucle, le travail est fait
+            }
+        }
+    }
+
+    public boolean reactivateWishlist(int wishlistId, String newDateStr) {
+        Wishlist target = null;
+        if (this.createdWishlists != null) {
+            for (Wishlist w : this.createdWishlists) {
+                if (w.getId() == wishlistId) {
+                    target = w;
+                    break;
+                }
+            }
+        }
+        if (target == null) return false;
+        return this.updateWishlist(wishlistId, target.getTitle(), target.getOccasion(), "ACTIVE", newDateStr);
+    }
+
+    // --- Gestion des Partages ---
+    
+    public boolean shareMyWishlist(int wishlistId, int targetUserId, String note) {
+        boolean ownsList = this.createdWishlists.stream().anyMatch(w -> w.getId() == wishlistId);
+        if (!ownsList) return false;
+        SharedWishlist shareAction = new SharedWishlist();
+        return shareAction.shareWishlist(wishlistId, targetUserId, note, String.valueOf(this.getId()));
+    }
+    
+    public boolean acceptPublicInvitation(int wishlistId) {
+        WishlistDAO wishlistDAO = new WishlistDAO();
+        // CORRECTION : On appelle la version à 4 paramètres
+        // 1: ID Liste, 2: ID User, 3: Message, 4: TOKEN (this.token)
+        return wishlistDAO.share(
+            wishlistId, 
+            this.id, 
+            "J'ai rejoint ta liste via ton lien public !", 
+            this.token // <--- C'EST ICI LA CLÉ : On passe le JWT récupéré au login
+        );
+    }
+
+    // --- SYNCHRONISATION MEMOIRE (Gifts) ---
+    // Ce sont les méthodes utilisées par ton GiftServlet
+
+    public void syncGiftAddition(int wishlistId, Gift newGift) {
+        if (this.createdWishlists == null) return;
+        this.createdWishlists.stream()
+            .filter(wl -> wl.getId() == wishlistId)
+            .findFirst()
+            .ifPresent(wl -> wl.getGifts().add(newGift));
+    }
+
+    public void syncGiftRemoval(int wishlistId, int giftId) {
+        if (this.createdWishlists == null) return;
+        this.createdWishlists.stream()
+            .filter(wl -> wl.getId() == wishlistId)
+            .findFirst()
+            .ifPresent(wl -> wl.getGifts().removeIf(g -> g.getId() == giftId));
+    }
+
+    public void syncGiftUpdate(int wishlistId, Gift updatedGift) {
+        if (this.createdWishlists == null) return;
+        this.createdWishlists.stream()
+            .filter(wl -> wl.getId() == wishlistId)
+            .findFirst()
+            .ifPresent(wl -> {
+                for (Gift g : wl.getGifts()) {
+                    if (g.getId() == updatedGift.getId()) {
+                        g.setName(updatedGift.getName());
+                        g.setPrice(updatedGift.getPrice());
+                        g.setSiteUrl(updatedGift.getSiteUrl());
+                        g.setPhotoUrl(updatedGift.getPhotoUrl());
+                        g.setDescription(updatedGift.getDescription());
+                        if(updatedGift.getPriority() != null) g.setPriority(updatedGift.getPriority());
+                        break;
+                    }
+                }
+            });
+    }
+
+    public void addWishlistLocally(Wishlist wishlist) {
+        if (this.createdWishlists == null) this.createdWishlists = new HashSet<>();
+        this.createdWishlists.add(wishlist);
+    }
+    public void refreshSharedListsData() {
+        if (this.WishlistPartager == null) return;
+
+        for (Wishlist wl : this.WishlistPartager) {
+            // On ne rafraîchit que les listes actives pour gagner en perf
+            if (wl.getStatus() == Status.ACTIVE) {
+                // Cette méthode existe déjà dans ton modèle Wishlist (voir étape précédente)
+                wl.loadAllGiftsContributions(); 
+            }
+        }
+    }
+
+    public List<String> generateDashboardNotifications() {
+        List<String> notifications = new ArrayList<>();
+
+        if (this.WishlistPartager == null) return notifications;
+
+        for (Wishlist wl : this.WishlistPartager) {
+            // Filtre : uniquement ACTIVE et non vide
+            if (wl.getStatus() == Status.ACTIVE && wl.getGifts() != null) {
+                
+                for (Gift gift : wl.getGifts()) {
+                    double collected = gift.getCollectedAmount();
+                    
+                    // Si de l'argent a été récolté
+                    if (collected > 0) {
+                        // Logique d'affichage (Emoji)
+                        String statusEmoji = (gift.getRemainingAmount() <= 0.01) ? "✅" : "💸";
+                        
+                        // Construction du message
+                        String msg = String.format(
+                            "%s Le cadeau <strong>%s</strong> (Liste : <em>%s</em>) a reçu des contributions (%s€ récoltés) !", 
+                            statusEmoji, 
+                            gift.getName(), 
+                            wl.getTitle(),
+                            String.format("%.2f", collected)
+                        );
+                        notifications.add(msg);
+                    }
+                }
+            }
+        }
+        return notifications;
+    }
+    
+    public void refresh() {
+        User freshData = userDAO.find(this.id); 
+        if (freshData != null) {
+            this.username = freshData.getUsername();
+            this.email = freshData.getEmail();
+            this.createdWishlists = freshData.getCreatedWishlists();
+            this.WishlistPartager = freshData.getSharedWishlists();
+            this.InfoWishlist = freshData.getSharedWishlistInfos();
+        }
+    }
+    
+    public static List<User> fetchAllSystemUsers() {
+        return userDAO.findAll(); 
+    }
+
+    // --- Getters / Setters ---
     public int getId() { return id; }
     public void setId(int id) { this.id = id; }
     public String getToken() { return token; }
@@ -53,102 +267,15 @@ public class User implements Serializable {
     public void setPsw(String psw) { this.psw = psw; }
     public Set<Contribution> getContributions() { return contributions; }
     public void setContributions(Set<Contribution> contributions) { this.contributions = contributions; }
-    
-    // --- Getters/Setters pour les RELATIONS (CORRIGÉS POUR LA JSP/EL) ---
+    public Set<Wishlist> getCreatedWishlists() { return createdWishlists; }
+    public void setCreatedWishlists(Set<Wishlist> createdWishlists) { this.createdWishlists = createdWishlists; }
+    public Set<Wishlist> getSharedWishlists() { return WishlistPartager; }
+    public void setSharedWishlists(Set<Wishlist> sharedWishlists) { this.WishlistPartager = sharedWishlists; }
+    public Set<SharedWishlist> getSharedWishlistInfos() { return InfoWishlist; }
+    public void setSharedWishlistInfos(Set<SharedWishlist> sharedWishlistInfos) { this.InfoWishlist = sharedWishlistInfos; }
+    public Set<SharedWishlist> getInfoWishlist() { return InfoWishlist; } // Compatibilité
+    public void setInfoWishlist(Set<SharedWishlist> InfoWishlist) { this.InfoWishlist = InfoWishlist; }
 
-    /**
-     * Getter correct, utilisé par EL: ${user.createdWishlists}
-     * Mappe sur le champ interne WishlistCreer.
-     */
-    public Set<Wishlist> getCreatedWishlists() {
-        return createdWishlists;
-    }
-
-    public void setCreatedWishlists(Set<Wishlist> createdWishlists) {
-        this.createdWishlists = createdWishlists;
-    }
-
-    /**
-     * Getter correct, utilisé par EL: ${user.sharedWishlists}
-     * Mappe sur le champ interne WishlistPartager.
-     */
-    public Set<Wishlist> getSharedWishlists() {
-        return WishlistPartager;
-    }
-
-    public void setSharedWishlists(Set<Wishlist> sharedWishlists) {
-        this.WishlistPartager = sharedWishlists;
-    }
-
-    /**
-     * Getter correct, utilisé par EL: ${user.sharedWishlistInfos}
-     * Mappe sur le champ interne InfoWishlist.
-     */
-    public Set<SharedWishlist> getSharedWishlistInfos() {
-        return InfoWishlist;
-    }
-
-    public void setSharedWishlistInfos(Set<SharedWishlist> sharedWishlistInfos) {
-        this.InfoWishlist = sharedWishlistInfos;
-    }
-    
-    /**
-     * Ancien Getter (Laisser pour la compatibilité)
-     */
-    public Set<SharedWishlist> getInfoWishlist() {
-        return InfoWishlist;
-    }
-    public void setInfoWishlist(Set<SharedWishlist> InfoWishlist) {
-        this.InfoWishlist = InfoWishlist;
-    }
-    
-    // --- Méthodes Object (Inchangées) ---
-
-    public void addGiftLocally(int wishlistId, Gift gift) {
-        this.createdWishlists.stream()
-            .filter(w -> w.getId() == wishlistId)
-            .findFirst()
-            .ifPresent(w -> w.getGifts().add(gift));
-    }
-
-    /**
-     * Supprime un cadeau localement
-     */
-    public void removeGiftLocally(int wishlistId, int giftId) {
-        this.createdWishlists.stream()
-            .filter(w -> w.getId() == wishlistId)
-            .findFirst()
-            .ifPresent(w -> w.getGifts().removeIf(g -> g.getId() == giftId));
-    }
-
-    /**
-     * Met à jour un cadeau localement
-     */
-    public void updateGiftLocally(int wishlistId, Gift updatedGift) {
-        this.createdWishlists.stream()
-            .filter(w -> w.getId() == wishlistId)
-            .findFirst()
-            .ifPresent(w -> {
-                w.getGifts().removeIf(g -> g.getId() == updatedGift.getId());
-                w.getGifts().add(updatedGift);
-            });
-    }
-    
-    public static List<User> fetchAllSystemUsers() {
-        // Appelle userDAO.findAll() qui lui-même appelle l'API /users/all
-        return userDAO.findAll(); 
-    }
-    
-    public boolean acceptPublicInvitation(int wishlistId) {
-        // 1. On instancie le DAO
-        WishlistDAO wishlistDAO = new WishlistDAO();
-        
-        // 2. On appelle la méthode share que tu m'as montrée
-        // 'this.id' est l'ID de l'utilisateur qui vient de s'inscrire
-        // On passe un message spécifique pour le lien public
-        return wishlistDAO.share(wishlistId, this.id, "J'ai rejoint ta liste via ton lien public !");
-    }
-    
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
@@ -156,31 +283,6 @@ public class User implements Serializable {
         User user = (User) o;
         return id == user.id;
     }
-
     @Override
-    public int hashCode() {
-        return Objects.hash(id);
-    }
-    
-
-    public void addWishlistLocally(Wishlist wishlist) {
-        if (this.createdWishlists == null) {
-            this.createdWishlists = new HashSet<>(); // ou ArrayList selon ton implémentation
-        }
-        this.createdWishlists.add(wishlist);
-    }
-    
-    public void refresh() {
-        // On appelle le DAO pour récupérer les données fraîches depuis l'API
-        // On suppose que l'API /users/{id} renvoie l'utilisateur avec ses listes et cadeaux à jour
-        User freshData = userDAO.find(this.id); 
-        
-        if (freshData != null) {
-            this.username = freshData.getUsername();
-            this.email = freshData.getEmail();
-            this.createdWishlists = freshData.getCreatedWishlists();
-            this.WishlistPartager = freshData.getSharedWishlists();
-            this.InfoWishlist = freshData.getSharedWishlistInfos();
-        }
-    }
+    public int hashCode() { return Objects.hash(id); }
 }

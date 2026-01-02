@@ -13,7 +13,7 @@ public class LogoutServlet extends HttpServlet {
     protected void doGet(HttpServletRequest request, HttpServletResponse response) 
             throws ServletException, IOException {
         
-        // 1. Récupérer la session existante
+        // 1. Récupérer la session existante oui
         HttpSession session = request.getSession(false);
         
         if (session != null) {

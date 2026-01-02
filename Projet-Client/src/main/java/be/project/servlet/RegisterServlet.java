@@ -15,6 +15,15 @@ public class RegisterServlet extends HttpServlet {
 
     protected void doGet(HttpServletRequest request, HttpServletResponse response) 
             throws ServletException, IOException {
+        
+        // 1. On récupère l'ID depuis l'URL (ex: /register?wishlistId=12)
+        String pendingId = request.getParameter("wishlistId");
+        
+        // 2. Si un ID est présent, on l'envoie à la JSP pour qu'elle le mette dans le formulaire
+        if (pendingId != null && !pendingId.isEmpty()) {
+            request.setAttribute("pendingWishlistId", pendingId);
+        }
+
         request.getRequestDispatcher("/WEB-INF/Vues/Register/register.jsp").forward(request, response);
     }
 
@@ -23,60 +32,41 @@ public class RegisterServlet extends HttpServlet {
         
         String email = request.getParameter("email");
         String password = request.getParameter("password");
+        String username = request.getParameter("username");
+        
+        // 3. On récupère l'ID depuis le champ caché du formulaire (POST)
+        String pendingIdStr = request.getParameter("pendingWishlistId");
+        
+        HttpSession session = request.getSession();
         
         try {
+            Integer pendingId = null;
+            if (pendingIdStr != null && !pendingIdStr.isEmpty()) {
+                pendingId = Integer.parseInt(pendingIdStr);
+            }
+
+            // Appel au modèle
             User newUser = new User();
-            newUser.setUsername(request.getParameter("username"));
+            newUser.setUsername(username);
             newUser.setEmail(email);
             newUser.setPsw(password);
 
-            // 1. Inscription : Création du compte via l'API
-            if (newUser.register()) {
+            // Ta méthode existante qui gère l'inscription + le partage
+            User userWithId = newUser.completeRegistration(password, pendingId);
+
+            if (userWithId != null) {
+                session.setAttribute("user", userWithId);
                 
-                // 2. Premier Login : Indispensable pour récupérer l'ID généré par la DB
-                User userWithId = newUser.login(email, password); 
-                
-                if (userWithId != null) {
-                    HttpSession session = request.getSession();
-                    Object pendingIdObj = session.getAttribute("pendingWishlistId");
-                    
-                    if (pendingIdObj != null) {
-                        try {
-                            int wId = Integer.parseInt(pendingIdObj.toString());
-                            
-                            // 3. Liaison : On lie l'utilisateur à la wishlist dans la DB
-                            boolean shared = userWithId.acceptPublicInvitation(wId);
-                            
-                            if (shared) {
-                                System.out.println("[REGISTER] Liaison réussie. Rafraîchissement des données...");
-                                
-                                // 4. Deuxième Login : Pour que l'objet Java contienne la nouvelle wishlist 
-                                // dans ses listes partagées (refresh local)
-                                userWithId = userWithId.login(email, password); 
-                                
-                                session.setAttribute("user", userWithId);
-                                session.removeAttribute("pendingWishlistId");
-                                
-                                response.sendRedirect(request.getContextPath() + "/dashboard?status=welcome_shared");
-                                return;
-                            }
-                        } catch (NumberFormatException nfe) {
-                            System.err.println("[REGISTER] Erreur format ID : " + pendingIdObj);
-                        }
-                    }
-                    
-                    // Si pas d'invitation, on connecte l'utilisateur tel quel
-                    session.setAttribute("user", userWithId);
-                }
-                
-                response.sendRedirect(request.getContextPath() + "/dashboard?success=true");
-                
+                String status = (pendingId != null) ? "welcome_shared" : "welcome";
+                response.sendRedirect(request.getContextPath() + "/dashboard?status=" + status);
             } else {
-                request.setAttribute("error", "Échec de l'inscription. L'email est peut-être déjà utilisé.");
+                request.setAttribute("error", "Échec de l'inscription. Email déjà utilisé.");
+                // Important : Si ça rate, on renvoie l'ID à la vue pour ne pas le perdre !
+                if (pendingId != null) request.setAttribute("pendingWishlistId", pendingId);
                 doGet(request, response);
             }
+
         } catch (Exception e) {
-            System.err.println("[REGISTER] Erreur Serveur : " + e.getMessage());
             e.printStackTrace();
             response.sendRedirect(request.getContextPath() + "/register?error=server_error");
         }

@@ -6,23 +6,34 @@ import java.util.HashSet;
 import java.util.Optional;
 import java.util.Set;
 import com.fasterxml.jackson.annotation.JsonIgnore;
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties; // 1. Importation à ajouter
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class Gift implements Serializable {
 
-	private static final long serialVersionUID = 1638358617492812187L;
-	private int id;
+    private static final long serialVersionUID = 1638358617492812187L;
+    private int id;
     private String name;
     private String description;
     private double price;
     private Integer priority;  
     private String photoUrl;
     private String siteUrl;
-	private Set<Contribution> contributions = new HashSet<>();
+    private Set<Contribution> contributions = new HashSet<>();
 
-	public Gift() {}
+    public Gift() {}
     
+    // --- LOGIQUE MÉTIER ---
+    public void calculateNewPriority(String direction) {
+        int current = (this.priority == null) ? 0 : this.priority;
+        if ("UP".equals(direction)) {
+            this.priority = Math.max(1, current - 1);
+        } else {
+            this.priority = current + 1;
+        }
+    }
+
+    // --- ACTIVE RECORD (CRUD) ---
     public boolean save(int wishlistId, User user, GiftDAO giftDAO) {
         Optional<Gift> result = giftDAO.createGift(this, wishlistId, user);
         if (result.isPresent()) {
@@ -44,7 +55,7 @@ public class Gift implements Serializable {
         return giftDAO.deleteGift(this.id, wishlistId, user);
     }
 
-    // --- Getters / Setters ---
+    // --- GETTERS / SETTERS ---
     public int getId() { return id; }
     public void setId(int id) { this.id = id; }
     public String getName() { return name; }
@@ -59,39 +70,27 @@ public class Gift implements Serializable {
     public void setPhotoUrl(String photoUrl) { this.photoUrl = photoUrl; }
     public String getSiteUrl() {return siteUrl;}
     public void setSiteUrl(String siteUrl) {this.siteUrl = siteUrl;}
-    
-    public Set<Contribution> getContributions() {
-		return contributions;
-	}
+    public Set<Contribution> getContributions() { return contributions; }
+    public void setContributions(Set<Contribution> contributions) { this.contributions = contributions; }
 
-	public void setContributions(Set<Contribution> contributions) {
-		this.contributions = contributions;
-	}
     @JsonIgnore
     public GiftStatus getStatus() {
-        double total = contributions.stream().mapToDouble(Contribution::getAmount).sum();
+        double total = getCollectedAmount();
         if (total >= price && total > 0) return GiftStatus.FUNDED;
         if (total > 0) return GiftStatus.PARTIALLY_FUNDED;
         return GiftStatus.AVAILABLE;
     }
     @JsonIgnore
     public double getCollectedAmount() {
-        if (contributions == null || contributions.isEmpty()) {
-            return 0.0;
-        }
-        // Somme des montants
-        return contributions.stream()
-                            .mapToDouble(Contribution::getAmount)
-                            .sum();
+        if (contributions == null || contributions.isEmpty()) return 0.0;
+        return contributions.stream().mapToDouble(Contribution::getAmount).sum();
     }
     @JsonIgnore
     public double getRemainingAmount() {
-        double remaining = this.price - getCollectedAmount();
-        return Math.max(0, remaining); // Empêche les nombres négatifs
+        return Math.max(0, this.price - getCollectedAmount());
     }
     @JsonIgnore
     public boolean isReadOnly() {
-        // Si le montant collecté est > 0, il est choisi (partiellement ou totalement)
         return getCollectedAmount() > 0;
     }
 }
