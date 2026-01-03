@@ -97,7 +97,7 @@
         </c:if>
 
         
-        <section>
+<section>
             <h2>Mes Listes de Souhaits</h2>
 
             <%-- Formulaire de création de liste --%>
@@ -119,7 +119,7 @@
                 <c:when test="${not empty user.createdWishlists}">
                     <ul class="wishlist-list">
                         <c:forEach var="wl" items="${user.createdWishlists}">
-                            <%-- LOGIQUE DE BLOCAGE WISHLIST (Combinaison des deux branches) --%>
+                            <%-- LOGIQUE DE BLOCAGE WISHLIST --%>
                             <c:set var="today" value="<%= java.time.LocalDate.now() %>" />
                             <c:set var="isExpired" value="${wl.expirationDate.isBefore(today)}" />
                             <c:set var="isBlocked" value="${wl.status != 'ACTIVE' || isExpired}" />
@@ -131,49 +131,43 @@
                                             <h3><c:out value="${wl.title}" /> <span class="badge"><c:out value="${wl.occasion}" /></span></h3>
                                             <p class="wishlist-meta">Fin : <c:out value="${wl.expirationDate}" /> | Statut : <strong><c:out value="${wl.status}" /></strong></p>
                                         </div>
-										<%-- Ajout de la condition disabled et du style grisé --%>
-										<button type="button" class="btn-copy-link" 
-										        ${isBlocked ? 'disabled style="opacity:0.5; cursor:not-allowed; background-color:#999;"' : ''} 
-										        onclick="copyInviteLink('${pageContext.request.scheme}://${pageContext.request.serverName}:${pageContext.request.serverPort}${pageContext.request.contextPath}/register?wishlistId=${wl.id}')">
-										    📋 Copier le lien public
-										</button>
+                                        <button type="button" class="btn-copy-link" 
+                                                ${isBlocked ? 'disabled style="opacity:0.5; cursor:not-allowed; background-color:#999;"' : ''} 
+                                                onclick="copyInviteLink('${pageContext.request.scheme}://${pageContext.request.serverName}:${pageContext.request.serverPort}${pageContext.request.contextPath}/register?wishlistId=${wl.id}')">
+                                            📋 Copier le lien public
+                                        </button>
                                     </div>
                                 </div>
                                 <div class="wishlist-actions">
-								    <%-- MODIFICATION ICI : On vérifie si c'est bloqué --%>
-								    <c:choose>
-								        <c:when test="${isBlocked}">
-								            <%-- Si bloqué : on affiche un faux bouton gris non cliquable --%>
-								            <span style="background-color: #ccc; color: #666; padding: 5px 10px; border-radius: 4px; cursor: not-allowed; font-size: 0.9em;">
-								                🔗 Partager
-								            </span>
-								        </c:when>
-								        <c:otherwise>
-								            <%-- Si actif : on affiche le vrai lien --%>
-								            <a href="${pageContext.request.contextPath}/share?wishlistId=${wl.id}&title=${wl.title}" class="btn-share">
-								                🔗 Partager
-								            </a>
-								        </c:otherwise>
-								    </c:choose>
-								    
-								    <c:choose>
-								        <c:when test="${isExpired}">
-										    <div style="display:flex; align-items:center; gap:8px; background-color: #ffebee; padding: 5px 8px; border-radius: 4px; border: 1px solid #ef9a9a;">
-										        <span style="color: #c62828; font-weight: bold; font-size: 0.85em;">⚠️ Expirée</span>
-										        
-										        <form action="${pageContext.request.contextPath}/wishlist/updateDate" method="POST" style="display:flex; align-items:center; gap:5px; margin:0;">
-										            <input type="hidden" name="wishlistId" value="${wl.id}">
-										            
-										            <input type="date" name="newDate" required min="<%= java.time.LocalDate.now() %>" 
-										                   style="font-size:0.8em; padding:3px; border:1px solid #cc8888; border-radius:3px; color:#c62828;">
-										            
-										            <button type="submit" title="Mettre à jour la date pour réactiver la liste"
-										                    style="background-color: #c62828; color: white; border: none; padding: 4px 8px; border-radius: 3px; cursor: pointer; font-size: 0.8em; font-weight:bold;">
-										                🔄 Relancer
-										            </button>
-										        </form>
-										    </div>
-										</c:when>
+                                    <c:choose>
+                                        <c:when test="${isBlocked}">
+                                            <span style="background-color: #ccc; color: #666; padding: 5px 10px; border-radius: 4px; cursor: not-allowed; font-size: 0.9em;">
+                                                🔗 Partager
+                                            </span>
+                                        </c:when>
+                                        <c:otherwise>
+                                            <a href="${pageContext.request.contextPath}/share?wishlistId=${wl.id}&title=${wl.title}" class="btn-share">
+                                                🔗 Partager
+                                            </a>
+                                        </c:otherwise>
+                                    </c:choose>
+                                    
+                                    <c:choose>
+                                        <c:when test="${isExpired}">
+                                            <div style="display:flex; align-items:center; gap:8px; background-color: #ffebee; padding: 5px 8px; border-radius: 4px; border: 1px solid #ef9a9a;">
+                                                <span style="color: #c62828; font-weight: bold; font-size: 0.85em;">⚠️ Expirée</span>
+                                                
+                                                <form action="${pageContext.request.contextPath}/wishlist/updateDate" method="POST" style="display:flex; align-items:center; gap:5px; margin:0;">
+                                                    <input type="hidden" name="wishlistId" value="${wl.id}">
+                                                    <input type="date" name="newDate" required min="<%= java.time.LocalDate.now() %>" 
+                                                           style="font-size:0.8em; padding:3px; border:1px solid #cc8888; border-radius:3px; color:#c62828;">
+                                                    <button type="submit" title="Mettre à jour la date"
+                                                            style="background-color: #c62828; color: white; border: none; padding: 4px 8px; border-radius: 3px; cursor: pointer; font-size: 0.8em; font-weight:bold;">
+                                                        🔄 Relancer
+                                                    </button>
+                                                </form>
+                                            </div>
+                                        </c:when>
                                         <c:otherwise>
                                             <form action="${pageContext.request.contextPath}/wishlist/toggleStatus" method="POST" style="display:inline;">
                                                 <input type="hidden" name="wishlistId" value="${wl.id}">
@@ -185,55 +179,59 @@
                                     </c:choose>
                                 </div>
 
-                                <%-- Ajouter un cadeau (bloqué si liste inactive - Logique TestUpdate) --%>
-									<%-- Ajouter un cadeau (bloqué si liste inactive) --%>
-									<div class="add-gift-box" style="margin-top:15px;">
-									    <h4>➕ Ajouter un cadeau</h4>
-									    <form action="${pageContext.request.contextPath}/gift/add" method="POST" class="gift-form" style="display: flex; gap: 10px; flex-wrap: wrap;">
-									        <input type="hidden" name="wishlistId" value="${wl.id}">
-									        
-									        <input type="text" name="name" placeholder="Nom du cadeau" required ${isBlocked ? 'disabled' : ''} style="flex: 2; min-width: 150px;">
-									        
-									        <input type="number" name="price" placeholder="Prix (€)" step="0.01" required ${isBlocked ? 'disabled' : ''} style="flex: 1; min-width: 80px;">
-									        
-									        <select name="priority" ${isBlocked ? 'disabled' : ''} style="flex: 1; min-width: 130px; padding: 8px; border: 1px solid #ccc; border-radius: 4px;" title="Niveau d'envie">
-									            <option value="1">⭐ 1 - Très envie</option>
-									            <option value="2">😍 2 - Forte</option>
-									            <option value="3" selected>🙂 3 - Normale</option>
-									            <option value="4">🤔 4 - Basse</option>
-									            <option value="5">🤷 5 - Optionnel</option>
-									        </select>
-									
-									        <input type="text" name="siteUrl" placeholder="Lien du produit (http://...)" ${isBlocked ? 'disabled' : ''} style="flex: 2; min-width: 140px;">
-									        
-									        <input type="text" name="photoUrl" placeholder="Lien de l'image (http://...jpg)" ${isBlocked ? 'disabled' : ''} style="flex: 2; min-width: 140px;">
-									        
-									        <button type="submit" ${isBlocked ? 'disabled' : ''} style="background-color: #26a69a;">Ajouter</button>
-									    </form>
-									    
-									    <c:if test="${isBlocked}">
-									        <p class="status-msg">⚠️ Activez la liste pour ajouter des cadeaux.</p>
-									    </c:if>
-									</div>
+                                <%-- Ajouter un cadeau --%>
+                                <div class="add-gift-box" style="margin-top:15px;">
+                                    <h4>➕ Ajouter un cadeau</h4>
+                                    <form action="${pageContext.request.contextPath}/gift/add" method="POST" class="gift-form" style="display: flex; gap: 10px; flex-wrap: wrap;">
+                                        <input type="hidden" name="wishlistId" value="${wl.id}">
+                                        <input type="text" name="name" placeholder="Nom du cadeau" required ${isBlocked ? 'disabled' : ''} style="flex: 2; min-width: 150px;">
+                                        <input type="number" name="price" placeholder="Prix (€)" step="0.01" required ${isBlocked ? 'disabled' : ''} style="flex: 1; min-width: 80px;">
+                                        
+                                        <select name="priority" ${isBlocked ? 'disabled' : ''} style="flex: 1; min-width: 130px; padding: 8px; border: 1px solid #ccc; border-radius: 4px;" title="Niveau d'envie">
+                                            <option value="1">⭐ 1 - Très envie</option>
+                                            <option value="2">😍 2 - Forte</option>
+                                            <option value="3" selected>🙂 3 - Normale</option>
+                                            <option value="4">🤔 4 - Basse</option>
+                                            <option value="5">🤷 5 - Optionnel</option>
+                                        </select>
+                                
+                                        <input type="text" name="siteUrl" placeholder="Lien du produit" ${isBlocked ? 'disabled' : ''} style="flex: 2; min-width: 140px;">
+                                        <input type="text" name="photoUrl" placeholder="Lien de l'image" ${isBlocked ? 'disabled' : ''} style="flex: 2; min-width: 140px;">
+                                        <button type="submit" ${isBlocked ? 'disabled' : ''} style="background-color: #26a69a;">Ajouter</button>
+                                    </form>
+                                    <c:if test="${isBlocked}">
+                                        <p class="status-msg">⚠️ Activez la liste pour ajouter des cadeaux.</p>
+                                    </c:if>
+                                </div>
                                 <hr>
-
-                                <%-- LISTE DES CADEAUX --%>
-                                <c:choose>
-                                    <c:when test="${not empty wl.gifts}">
+                                
+<c:choose>
+                                    <%-- On utilise directement la propriété du modèle --%>
+                                    <c:when test="${not empty wl.giftsSortedByPriority}">
                                         <ul class="gift-list">
-                                        <c:forEach var="gift" items="${wl.gifts}">
+                                        <c:forEach var="gift" items="${wl.giftsSortedByPriority}">
                                             <c:set var="isGiftLocked" value="${gift.readOnly}" />
 
                                             <li class="gift-item" style="flex-direction: column; align-items: stretch;">
+                                                <%-- LE CONTENU DE L'AFFICHAGE CADEAU RESTE IDENTIQUE --%>
                                                 <div style="display: flex; justify-content: space-between; align-items: center; width: 100%;">
                                                     <div class="gift-info">
                                                         <c:if test="${not empty gift.photoUrl}">
                                                             <img src="${gift.photoUrl}" style="width:60px; margin-right:10px;">
                                                         </c:if>
-                                                        <%-- Affichage standard --%>
                                                         <strong><c:out value="${gift.name}" /></strong> 
                                                         (<c:out value="${gift.price}" />€)
-                                                        <span style="font-size:0.8em; color:#666;"> - Prio: <c:out value="${gift.priority}"/></span>
+                                                        
+                                                        <span style="font-size:0.8em; color:#e65100; font-weight:bold; margin-left:5px;">
+                                                            <c:choose>
+                                                                <c:when test="${gift.priority == 1}">⭐ Très envie</c:when>
+                                                                <c:when test="${gift.priority == 2}">😍 Forte</c:when>
+                                                                <c:when test="${gift.priority == 3}">🙂 Normale</c:when>
+                                                                <c:when test="${gift.priority == 4}">🤔 Basse</c:when>
+                                                                <c:when test="${gift.priority == 5}">🤷 Optionnel</c:when>
+                                                                <c:otherwise>Prio: ${gift.priority}</c:otherwise>
+                                                            </c:choose>
+                                                        </span>
                                                         
                                                         <c:if test="${not empty gift.siteUrl}">
                                                              <a href="${gift.siteUrl}" target="_blank" style="font-size:0.8em;">🔗 Lien</a>
@@ -256,52 +254,44 @@
                                                     </div>
                                                 </div>
 
-                                                <%-- ================================================= --%>
-                                                <%-- FORMULAIRE DE MODIFICATION (VERSION AMÉLIORÉE) --%>
-                                                <%-- ================================================= --%>
-													<c:if test="${not isGiftLocked && not isBlocked}">
-													    <div id="modify-form-${gift.id}" class="add-gift-box" style="display:none; margin-top: 10px; background-color: #fff9c4; border: 1px solid #fbc02d;">
-													        <form action="${pageContext.request.contextPath}/gift/update" method="POST" class="gift-form" style="display:flex; flex-direction: column; gap: 8px;">
-													            <input type="hidden" name="giftId" value="${gift.id}">
-													            <input type="hidden" name="wishlistId" value="${wl.id}">
-													            
-													            <div style="display: flex; gap: 10px; flex-wrap: wrap;">
-													                <div style="flex: 3;">
-													                    <label style="font-size:0.8em;">Nom :</label>
-													                    <input type="text" name="name" value="<c:out value='${gift.name}'/>" required placeholder="Nom du cadeau" style="width:100%;">
-													                </div>
-													                <div style="flex: 1;">
-													                    <label style="font-size:0.8em;">Prix (€) :</label>
-													                    <input type="number" name="price" value="<c:out value='${gift.price}'/>" step="0.01" required placeholder="Prix" style="width:100%;">
-													                </div>
-													                <div style="flex: 1;">
-													                    <label style="font-size:0.8em;">Priorité :</label>
-													                    <input type="number" name="priority" value="${gift.priority != null ? gift.priority : 3}" min="1" max="5" required style="width: 100%;">
-													                </div>
-													            </div>
-													
-													            <div style="display: flex; gap: 10px; flex-wrap: wrap;">
-													                <%-- Lien du Site --%>
-													                <div style="flex: 1;">
-													                    <label style="font-size:0.8em;">Lien du produit (Site) :</label>
-													                    <input type="text" name="siteUrl" value="<c:out value='${gift.siteUrl}'/>" placeholder="https://site-marchand.com/produit" style="width: 100%;">
-													                </div>
-													                
-													                <%-- AJOUT : Lien de l'image --%>
-													                <div style="flex: 1;">
-													                    <label style="font-size:0.8em;">Lien de l'image (Photo) :</label>
-													                    <input type="text" name="photoUrl" value="<c:out value='${gift.photoUrl}'/>" placeholder="https://site.com/image.jpg" style="width: 100%;">
-													                </div>
-													            </div>
-													
-													            <div style="margin-top: 5px; display: flex; justify-content: flex-end; gap: 10px;">
-													                <button type="button" onclick="toggleModifyForm(${gift.id})" style="background-color: #e0e0e0; color: black;">Annuler</button>
-													                <button type="submit" style="background-color: #fbc02d; color: black;">💾 Enregistrer modifications</button>
-													            </div>
-													        </form>
-													    </div>
-													</c:if>
-                                                <%-- ================================================= --%>
+                                                <%-- FORMULAIRE MODIFICATION --%>
+                                                <c:if test="${not isGiftLocked && not isBlocked}">
+                                                    <div id="modify-form-${gift.id}" class="add-gift-box" style="display:none; margin-top: 10px; background-color: #fff9c4; border: 1px solid #fbc02d;">
+                                                        <form action="${pageContext.request.contextPath}/gift/update" method="POST" class="gift-form" style="display:flex; flex-direction: column; gap: 8px;">
+                                                            <input type="hidden" name="giftId" value="${gift.id}">
+                                                            <input type="hidden" name="wishlistId" value="${wl.id}">
+                                                            
+                                                            <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+                                                                <div style="flex: 3;">
+                                                                    <label style="font-size:0.8em;">Nom :</label>
+                                                                    <input type="text" name="name" value="<c:out value='${gift.name}'/>" required placeholder="Nom" style="width:100%;">
+                                                                </div>
+                                                                <div style="flex: 1;">
+                                                                    <label style="font-size:0.8em;">Prix (€) :</label>
+                                                                    <input type="number" name="price" value="<c:out value='${gift.price}'/>" step="0.01" required style="width:100%;">
+                                                                </div>
+                                                                <div style="flex: 1;">
+                                                                    <label style="font-size:0.8em;">Priorité :</label>
+                                                                    <input type="number" name="priority" value="${gift.priority != null ? gift.priority : 3}" min="1" max="5" required style="width: 100%;">
+                                                                </div>
+                                                            </div>
+                                                            <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+                                                                <div style="flex: 1;">
+                                                                    <label style="font-size:0.8em;">Lien du produit :</label>
+                                                                    <input type="text" name="siteUrl" value="<c:out value='${gift.siteUrl}'/>" placeholder="https://..." style="width: 100%;">
+                                                                </div>
+                                                                <div style="flex: 1;">
+                                                                    <label style="font-size:0.8em;">Lien de l'image :</label>
+                                                                    <input type="text" name="photoUrl" value="<c:out value='${gift.photoUrl}'/>" placeholder="https://..." style="width: 100%;">
+                                                                </div>
+                                                            </div>
+                                                            <div style="margin-top: 5px; display: flex; justify-content: flex-end; gap: 10px;">
+                                                                <button type="button" onclick="toggleModifyForm(${gift.id})" style="background-color: #e0e0e0; color: black;">Annuler</button>
+                                                                <button type="submit" style="background-color: #fbc02d; color: black;">💾 Enregistrer</button>
+                                                            </div>
+                                                        </form>
+                                                    </div>
+                                                </c:if>
                                             </li>
                                         </c:forEach>
                                         </ul>
@@ -317,7 +307,7 @@
         </section>
 
         <%-- SECTION DES LISTES PARTAGÉES (Fusionnée : Contributions du HEAD + Structure du TEST) --%>
-        <section class="shared-section">
+<section class="shared-section">
             <h2>Listes partagées avec moi</h2>
             <c:choose>
                 <c:when test="${not empty user.sharedWishlists}">
@@ -337,10 +327,13 @@
                                     </div>
 
                                     <div id="shared-gifts-container-${wl.id}" class="shared-gifts-display" style="display:none;">
+                                        
+                                        <%-- TRI AUTOMATIQUE VIA LE MODELE (MVC Respecté) --%>
                                         <c:choose>
-                                            <c:when test="${not empty wl.gifts}">
+                                            <%-- On utilise la propriété du modèle ici aussi --%>
+                                            <c:when test="${not empty wl.giftsSortedByPriority}">
                                                 <div class="gift-list">
-                                                    <c:forEach var="gift" items="${wl.gifts}">
+                                                    <c:forEach var="gift" items="${wl.giftsSortedByPriority}">
                                                         
                                                         <c:set var="percentage" value="${(gift.collectedAmount / gift.price) * 100}" />
 
@@ -354,6 +347,16 @@
                                                                         <div>
                                                                             <h4 style="margin:0;"><c:out value="${gift.name}" /></h4>
                                                                             <small style="color:#666;"><c:out value="${gift.description}" /></small>
+                                                                            
+                                                                            <span style="font-size:0.75em; color:#e65100; font-weight:bold; display:block; margin-top:2px;">
+                                                                                <c:choose>
+                                                                                    <c:when test="${gift.priority == 1}">⭐ Très envie</c:when>
+                                                                                    <c:when test="${gift.priority == 2}">😍 Forte</c:when>
+                                                                                    <c:when test="${gift.priority == 3}">🙂 Normale</c:when>
+                                                                                    <c:otherwise>Prio: ${gift.priority}</c:otherwise>
+                                                                                </c:choose>
+                                                                            </span>
+
                                                                             <p style="margin: 2px 0; font-weight:bold;">
                                                                                 <fmt:formatNumber value="${gift.price}" type="currency" currencySymbol="€"/>
                                                                             </p>
@@ -383,15 +386,14 @@
                                                                 <div class="gift-actions-col">
                                                                     <c:choose>
                                                                         <c:when test="${gift.remainingAmount > 0.01}">
-                                                                            <div style="display:flex; gap:5px; flex-wrap:wrap; justify-content: flex-end;">
+                                                                            <div style="display:flex;">
                                                                                 <button class="btn-contribute" onclick="toggleContributionForm(${gift.id})">
                                                                                     💰 Participer
                                                                                 </button>
-
                                                                                 <c:if test="${gift.collectedAmount <= 0}">
                                                                                     <form action="${pageContext.request.contextPath}/contribution/add" method="POST" style="display:inline;">
                                                                                         <input type="hidden" name="giftId" value="${gift.id}">
-                                                                                        <input type="hidden" name="wishlistId" value="${wl.id}"> 
+                                                                                        <input type="hidden" name="wishlistId" value="${wl.id}">
                                                                                         <input type="hidden" name="amount" value="${gift.price}">
                                                                                         <input type="hidden" name="comment" value="Cadeau réservé entièrement !">
                                                                                         <button type="submit" class="btn-reserve" onclick="return confirm('Voulez-vous réserver ce cadeau en payant la totalité (${gift.price}€) ?')">
@@ -400,6 +402,21 @@
                                                                                     </form>
                                                                                 </c:if>
                                                                             </div>
+                                                                            
+                                                                            <div id="form-contribution-${gift.id}" class="contribution-box">
+                                                                                <form action="${pageContext.request.contextPath}/contribution/add" method="POST">
+                                                                                    <input type="hidden" name="giftId" value="${gift.id}">
+                                                                                    <input type="hidden" name="wishlistId" value="${wl.id}">
+                                                                                    
+                                                                                    <label style="display:block; margin-bottom:3px; font-size:0.9em;">Montant (€) :</label>
+                                                                                    <input type="number" name="amount" class="input-amount" step="0.01" min="1" max="${gift.remainingAmount}" placeholder="Max ${gift.remainingAmount}" required>
+
+                                                                                    <label style="display:block; margin-top: 5px; margin-bottom:3px; font-size:0.9em;">Petit mot :</label>
+                                                                                    <input type="text" name="comment" placeholder="Message..." style="width: 100%; box-sizing: border-box; padding: 5px;">
+
+                                                                                    <button type="submit" class="btn-submit-contribution" style="width:100%; margin-top:5px;">Valider</button>
+                                                                                </form>
+                                                                            </div>
                                                                         </c:when>
                                                                         <c:otherwise>
                                                                             <button class="btn-completed" disabled>✔️ Complet</button>
@@ -407,26 +424,13 @@
                                                                     </c:choose>
                                                                 </div>
                                                             </div>
-
-                                                            <div id="form-contribution-${gift.id}" class="contribution-box">
-                                                                <form action="${pageContext.request.contextPath}/contribution/add" method="POST">
-                                                                    <input type="hidden" name="giftId" value="${gift.id}">
-                                                                    <input type="hidden" name="wishlistId" value="${wl.id}">
-                                                                    
-                                                                    <div style="display:flex; align-items:flex-end; gap:10px;">
-                                                                        <div>
-                                                                            <label style="font-size:0.8em; display:block;">Montant (€)</label>
-                                                                            <input type="number" name="amount" class="input-amount" step="0.01" min="1" max="${gift.remainingAmount}" placeholder="Max ${gift.remainingAmount}" required>
-                                                                        </div>
-                                                                        <button type="submit" class="btn-submit-contribution">Confirmer</button>
-                                                                    </div>
-                                                                </form>
-                                                            </div>
                                                         </div>
                                                     </c:forEach>
                                                 </div>
                                             </c:when>
-                                            <c:otherwise><p class="empty-msg">Aucun cadeau dans cette liste.</p></c:otherwise>
+                                            <c:otherwise>
+                                                <p class="empty-msg">Aucun cadeau dans cette liste.</p>
+                                            </c:otherwise>
                                         </c:choose>
                                     </div>
                                 </li>

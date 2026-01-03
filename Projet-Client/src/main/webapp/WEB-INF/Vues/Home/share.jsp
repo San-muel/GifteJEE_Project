@@ -126,7 +126,7 @@
 <body>
 
     <div style="position: absolute; top: 20px; left: 20px;">
-        <a href="${pageContext.request.contextPath}/home" style="font-weight: bold; text-decoration: none; color: #333;">&larr; Retour</a>
+        <a href="${pageContext.request.contextPath}/dashboard" style="font-weight: bold; text-decoration: none; color: #333;">&larr; Retour</a>
     </div>
 
     <div class="container">
@@ -170,7 +170,7 @@
             <button type="submit" class="btn-submit" style="margin-top: 20px; width:100%; padding:12px; background-color:#40B5AD; color:white; border:none; border-radius:6px; font-weight:bold; cursor:pointer;">Envoyer l'invitation ✨</button>
             
             <p style="text-align: center; margin-top: 15px;">
-                <a href="${pageContext.request.contextPath}/home" style="color: #999; font-size: 0.9em;">Annuler</a>
+                <a href="${pageContext.request.contextPath}/dashboard" style="color: #999; font-size: 0.9em;">Annuler</a>
             </p>
         </form>
     </div>

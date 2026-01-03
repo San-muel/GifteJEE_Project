@@ -41,13 +41,7 @@ public class SharedWishlist implements Serializable {
         // Note: Assure-toi que ton WishlistDAO possède bien la méthode share(int, int, String, String)
         return wishlistDAO.share(wishlistId, targetUserId, note, token); 
     }
-    
-    /**
-     * Surcharge (Overload) pour la compatibilité : appelle la méthode principale avec note null
-     */
-    public boolean shareWishlist(int wishlistId, int targetUserId, String token) {
-        return this.shareWishlist(wishlistId, targetUserId, null, token);
-    }
+   
 
     @Override
     public String toString() {

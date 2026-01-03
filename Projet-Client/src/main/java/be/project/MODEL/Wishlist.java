@@ -2,11 +2,12 @@ package be.project.MODEL;
 
 import java.io.Serializable;
 import java.time.LocalDate;
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
 import java.util.Set;
-// NOUVEL IMPORT NÉCESSAIRE POUR LE FILTRAGE
 import java.util.stream.Collectors;
 
 import be.project.DAO.ContributionDAO;
@@ -137,6 +138,19 @@ public class Wishlist implements Serializable {
             List<Contribution> list = contributionDAO.findAllByGiftId(gift.getId());
             gift.setContributions(new HashSet<>(list));
         }
+    }
+    
+    public List<Gift> getGiftsSortedByPriority() {
+        if (this.gifts == null) return new ArrayList<>();
+        
+        List<Gift> sorted = new ArrayList<>(this.gifts);
+        // Tri : Prio 1 en premier, Prio 5 en dernier
+        Collections.sort(sorted, (g1, g2) -> {
+            Integer p1 = (g1.getPriority() != null) ? g1.getPriority() : 3;
+            Integer p2 = (g2.getPriority() != null) ? g2.getPriority() : 3;
+            return p1.compareTo(p2);
+        });
+        return sorted;
     }
     
     @Override

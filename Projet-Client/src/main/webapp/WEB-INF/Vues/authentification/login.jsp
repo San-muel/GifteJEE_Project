@@ -1,4 +1,7 @@
 <%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
+<%-- Import de la JSTL --%>
+<%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c" %>
+
 <!DOCTYPE html>
 <html>
 <head>
@@ -13,21 +16,18 @@
     <div class="auth-container">
         <h1>Connexion</h1>
         
-        <%-- Afficher un message d'erreur s'il existe --%>
-        <% 
-            String errorMessage = (String) request.getAttribute("errorMessage");
-            if (errorMessage != null) {
-        %>
-            <p style="color: red;"><%= errorMessage %></p>
-        <%
-            }
-        %>
+        <%-- Remplacement du scriptlet "if" par la balise JSTL c:if --%>
+        <c:if test="${not empty errorMessage}">
+            <p style="color: red;">${errorMessage}</p>
+        </c:if>
         
-        <form action="<%= request.getContextPath() %>/auth" method="POST">
+        <%-- Utilisation de EL pour l'action du formulaire --%>
+        <form action="${pageContext.request.contextPath}/auth" method="POST">
             <div>
                 <label for="email">Email :</label>
+                <%-- Utilisation de EL pour la valeur, qui gère automatiquement le null (affiche rien si vide) --%>
                 <input type="email" id="email" name="email" required 
-                       value="<%= (request.getAttribute("email") != null) ? request.getAttribute("email") : "" %>">
+                       value="${email}">
             </div>
             <br>
     		<div>
