@@ -14,11 +14,6 @@ import java.io.IOException;
 public class ContributionServlet extends HttpServlet {
     private static final long serialVersionUID = 1L;
 
-    // PLUS DE DAO ICI !
-
-    /**
-     * GET : /contribution/{id}
-     */
     protected void doGet(HttpServletRequest request, HttpServletResponse response) 
             throws ServletException, IOException {
 
@@ -32,7 +27,6 @@ public class ContributionServlet extends HttpServlet {
         try {
             int id = Integer.parseInt(pathInfo.substring(1));
             
-            // APPEL AU MODEL (Static)
             Contribution contribution = Contribution.find(id);
 
             if (contribution != null) {
@@ -45,16 +39,11 @@ public class ContributionServlet extends HttpServlet {
         } catch (NumberFormatException e) {
             response.sendError(HttpServletResponse.SC_BAD_REQUEST, "ID invalide.");
         } catch (Exception e) {
-            e.printStackTrace(); // Log serveur
+            e.printStackTrace(); 
             response.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
         }
     }
 
-    /**
-     * POST : /contribution/add (souvent géré par un mapping URL ou if pathInfo)
-     * NOTE: Si ton formulaire poste vers /contribution/add, il faut gérer le pathInfo.
-     * Ici, j'assume que ton formulaire envoie les données.
-     */
     protected void doPost(HttpServletRequest request, HttpServletResponse response) 
             throws ServletException, IOException {
         
@@ -67,23 +56,19 @@ public class ContributionServlet extends HttpServlet {
         }
 
         try {
-            // 1. Extraction des données
             int giftId = Integer.parseInt(request.getParameter("giftId"));
             int wishlistId = Integer.parseInt(request.getParameter("wishlistId"));
             double amount = Double.parseDouble(request.getParameter("amount"));
             String comment = request.getParameter("comment");
 
-            // 2. Création via le Modèle
             Contribution contrib = new Contribution();
             contrib.setAmount(amount);
             contrib.setComment(comment);
             contrib.setUserId(currentUser.getId()); 
 
-            // Active Record : create() retourne l'objet créé ou null
             Contribution createdContrib = contrib.create(giftId, currentUser); 
 
             if (createdContrib != null) {
-                // 3. Mise à jour de la Session (User)
                 currentUser.syncContributionAddition(createdContrib);
                 
                 response.sendRedirect(request.getContextPath() + "/wishlistDetail?id=" + wishlistId + "&success=contrib");

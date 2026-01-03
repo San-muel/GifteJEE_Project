@@ -26,17 +26,13 @@ public class User implements Serializable {
 
     public User() {}
 
-    // --- Authentication / Registration ---
     public static User login(String email, String password) throws Exception {
-        // 1. Validation des données entrantes (Défensif)
         if (email == null || email.trim().isEmpty() || password == null || password.trim().isEmpty()) {
             throw new IllegalArgumentException("Veuillez remplir tous les champs.");
         }
 
-        // 2. Appel DAO
         User foundUser = userDAO.authenticate(email, password);
         
-        // 3. Validation du résultat
         if (foundUser == null) {
             throw new IllegalArgumentException("Email ou mot de passe invalide.");
         }
@@ -66,8 +62,6 @@ public class User implements Serializable {
         this.contributions.add(c);
         System.out.println("[USER MEMORY] Contribution ajoutée à la session utilisateur.");
     }
-    
-    // --- Gestion des Wishlists (Métier) ---
     
     public boolean createWishlist(String title, String occasion, String statusStr, String dateStr) {
         Wishlist toCreate = Wishlist.fromForm(title, occasion, statusStr, dateStr);
@@ -102,16 +96,13 @@ public class User implements Serializable {
     }
     
     public void updateWishlistStatusLocally(int wishlistId, Status newStatus) {
-        // Vérification de sécurité pour éviter les NullPointerException
         if (this.createdWishlists == null) return;
 
-        // On parcourt les listes de l'utilisateur en mémoire
         for (Wishlist w : this.createdWishlists) {
             if (w.getId() == wishlistId) {
-                // On a trouvé la liste, on met à jour son statut
                 w.setStatus(newStatus);
                 System.out.println("[USER MEMORY] Statut mis à jour localement pour la liste " + wishlistId);
-                break; // On arrête la boucle, le travail est fait
+                break; 
             }
         }
     }
@@ -130,8 +121,6 @@ public class User implements Serializable {
         return this.updateWishlist(wishlistId, target.getTitle(), target.getOccasion(), "ACTIVE", newDateStr);
     }
 
-    // --- Gestion des Partages ---
-    
     public boolean shareMyWishlist(int wishlistId, int targetUserId, String note) {
         boolean ownsList = this.createdWishlists.stream().anyMatch(w -> w.getId() == wishlistId);
         if (!ownsList) return false;
@@ -141,18 +130,13 @@ public class User implements Serializable {
     
     public boolean acceptPublicInvitation(int wishlistId) {
         WishlistDAO wishlistDAO = new WishlistDAO();
-        // CORRECTION : On appelle la version à 4 paramètres
-        // 1: ID Liste, 2: ID User, 3: Message, 4: TOKEN (this.token)
         return wishlistDAO.share(
             wishlistId, 
             this.id, 
             "J'ai rejoint ta liste via ton lien public !", 
-            this.token // <--- C'EST ICI LA CLÉ : On passe le JWT récupéré au login
+            this.token
         );
     }
-
-    // --- SYNCHRONISATION MEMOIRE (Gifts) ---
-    // Ce sont les méthodes utilisées par ton GiftServlet
 
     public void syncGiftAddition(int wishlistId, Gift newGift) {
         if (this.createdWishlists == null) return;
@@ -198,9 +182,7 @@ public class User implements Serializable {
         if (this.WishlistPartager == null) return;
 
         for (Wishlist wl : this.WishlistPartager) {
-            // On ne rafraîchit que les listes actives pour gagner en perf
             if (wl.getStatus() == Status.ACTIVE) {
-                // Cette méthode existe déjà dans ton modèle Wishlist (voir étape précédente)
                 wl.loadAllGiftsContributions(); 
             }
         }
@@ -212,18 +194,14 @@ public class User implements Serializable {
         if (this.WishlistPartager == null) return notifications;
 
         for (Wishlist wl : this.WishlistPartager) {
-            // Filtre : uniquement ACTIVE et non vide
             if (wl.getStatus() == Status.ACTIVE && wl.getGifts() != null) {
                 
                 for (Gift gift : wl.getGifts()) {
                     double collected = gift.getCollectedAmount();
                     
-                    // Si de l'argent a été récolté
                     if (collected > 0) {
-                        // Logique d'affichage (Emoji)
                         String statusEmoji = (gift.getRemainingAmount() <= 0.01) ? "✅" : "💸";
                         
-                        // Construction du message
                         String msg = String.format(
                             "%s Le cadeau <strong>%s</strong> (Liste : <em>%s</em>) a reçu des contributions (%s€ récoltés) !", 
                             statusEmoji, 
@@ -254,7 +232,6 @@ public class User implements Serializable {
         return userDAO.findAll(); 
     }
 
-    // --- Getters / Setters ---
     public int getId() { return id; }
     public void setId(int id) { this.id = id; }
     public String getToken() { return token; }
@@ -273,7 +250,7 @@ public class User implements Serializable {
     public void setSharedWishlists(Set<Wishlist> sharedWishlists) { this.WishlistPartager = sharedWishlists; }
     public Set<SharedWishlist> getSharedWishlistInfos() { return InfoWishlist; }
     public void setSharedWishlistInfos(Set<SharedWishlist> sharedWishlistInfos) { this.InfoWishlist = sharedWishlistInfos; }
-    public Set<SharedWishlist> getInfoWishlist() { return InfoWishlist; } // Compatibilité
+    public Set<SharedWishlist> getInfoWishlist() { return InfoWishlist; } 
     public void setInfoWishlist(Set<SharedWishlist> InfoWishlist) { this.InfoWishlist = InfoWishlist; }
 
     @Override

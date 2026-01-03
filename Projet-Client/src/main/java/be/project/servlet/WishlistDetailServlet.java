@@ -29,7 +29,6 @@ public class WishlistDetailServlet extends HttpServlet {
             
             int id = Integer.parseInt(idParam);
 
-            // 1. Utiliser la méthode statique du Model (Active Record)
             Wishlist wishlist = Wishlist.find(id); 
 
             if (wishlist == null) {
@@ -37,10 +36,8 @@ public class WishlistDetailServlet extends HttpServlet {
                 return;
             }
 
-            // 2. On demande au modèle de se compléter
             wishlist.loadAllGiftsContributions();
 
-            // 3. Envoyer à la JSP
             request.setAttribute("selectedWishlist", wishlist);
             request.getRequestDispatcher("/WEB-INF/Vues/Home/wishlistDetail.jsp").forward(request, response);
 

@@ -14,8 +14,6 @@ public class GiftDAO extends DAO<Gift> {
     private final HttpClient client = HttpClient.newHttpClient();
     private final ObjectMapper objectMapper = new ObjectMapper();
 
-    // POST : /wishlists/{wishlistId}/gifts
- // Dans GiftDAO.java (Client)
     public Optional<Gift> createGift(Gift gift, int wishlistId, User user) {
         String url = ConfigLoad.API_BASE_URL + "wishlists/" + wishlistId + "/gifts";
         System.out.println("[CLIENT DAO] Envoi POST vers : " + url);
@@ -32,7 +30,6 @@ public class GiftDAO extends DAO<Gift> {
 
             HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
             
-            // --- LOGS CRITIQUES ---
             System.out.println("[CLIENT DAO] STATUS CODE RECU : " + response.statusCode());
             System.out.println("[CLIENT DAO] CORPS RECU : " + response.body());
 
@@ -48,7 +45,6 @@ public class GiftDAO extends DAO<Gift> {
         return Optional.empty();
     }
     
-    // PUT : /wishlists/{wishlistId}/gifts/{giftId}
     public boolean updateGift(Gift gift, int wishlistId, User user) {
         String url = ConfigLoad.API_BASE_URL + "wishlists/" + wishlistId + "/gifts/" + gift.getId();
         try {
@@ -62,18 +58,16 @@ public class GiftDAO extends DAO<Gift> {
                     .build();
 
             HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
-            return response.statusCode() == 204; // 204 No Content est attendu pour un PUT réussi
+            return response.statusCode() == 204; 
         } catch (Exception e) {
             return false;
         }
     }
     
     public boolean updatePriority(Gift gift, int wishlistId, User user) {
-        // URI RESTful : la priorité est une propriété de la ressource Gift
         String url = ConfigLoad.API_BASE_URL + "wishlists/" + wishlistId + "/gifts/" + gift.getId() + "/priority";
         
         try {
-            // On envoie un JSON simple contenant uniquement la nouvelle valeur
             String jsonBody = "{\"priority\": " + gift.getPriority() + "}";
 
             HttpRequest request = HttpRequest.newBuilder()
@@ -85,7 +79,6 @@ public class GiftDAO extends DAO<Gift> {
 
             HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
             
-            // REST : 200 OK ou 204 No Content pour une mise à jour réussie
             return response.statusCode() == 200 || response.statusCode() == 204;
         } catch (Exception e) {
             System.err.println("[CLIENT DAO] Erreur REST Priority: " + e.getMessage());
@@ -93,7 +86,6 @@ public class GiftDAO extends DAO<Gift> {
         }
     }
 
-    // DELETE : /wishlists/{wishlistId}/gifts/{giftId}
     public boolean deleteGift(int giftId, int wishlistId, User user) {
         String url = ConfigLoad.API_BASE_URL + "wishlists/" + wishlistId + "/gifts/" + giftId;
         try {

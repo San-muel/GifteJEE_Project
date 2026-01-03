@@ -12,19 +12,14 @@ import javax.servlet.http.HttpServletResponse;
 import be.project.MODEL.SharedWishlist;
 import be.project.MODEL.User;
 
-/**
- * Servlet implementation class ShareServlet
- */
 @WebServlet("/share")
 public class ShareServlet extends HttpServlet {
 
 	private static final long serialVersionUID = -1350736351886535373L;
 
 	protected void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
-        // Logique Active Record : Le modèle fournit la liste
         List<User> members = User.fetchAllSystemUsers();
         
-        // On récupère l'ID de la wishlist à partager passé par le bouton de la home
         String wId = request.getParameter("wishlistId");
         
         request.setAttribute("users", members);
@@ -35,7 +30,6 @@ public class ShareServlet extends HttpServlet {
 	protected void doPost(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
 	    User currentUser = (User) request.getSession().getAttribute("user");
 	    
-	    // Sécurité de base
 	    if (currentUser == null) {
 	        response.sendError(HttpServletResponse.SC_FORBIDDEN);
 	        return;

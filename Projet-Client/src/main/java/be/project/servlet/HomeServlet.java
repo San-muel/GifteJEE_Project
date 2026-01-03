@@ -16,10 +16,8 @@ public class HomeServlet extends HttpServlet {
     protected void doGet(HttpServletRequest request, HttpServletResponse response) 
             throws ServletException, IOException {
         
-        // C'est ici que la magie opère : une seule ligne pour tout faire !
         List<Wishlist> validWishlists = Wishlist.findActiveAndValid();
 
-        // Envoi à la vue
         request.setAttribute("wishlists", validWishlists);
         request.getRequestDispatcher("/WEB-INF/Vues/Home/homePage.jsp").forward(request, response);
     }

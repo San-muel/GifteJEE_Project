@@ -23,7 +23,6 @@ public class WishlistServlet extends HttpServlet {
             return;
         }
 
-        // Récupération des paramètres
         String title = request.getParameter("title");
         String occasion = request.getParameter("occasion");
         String statusStr = request.getParameter("status");
@@ -54,8 +53,6 @@ public class WishlistServlet extends HttpServlet {
                 actionStatus = "wishlist_reactivated";
             }
 
-            // --- C'EST ICI QU'ON CHANGE ---
-            // On redirige vers la Servlet Dashboard pour qu'elle recalcule les notifs
             String targetUrl = request.getContextPath() + "/dashboard"; 
             
             if (success) {
@@ -65,7 +62,6 @@ public class WishlistServlet extends HttpServlet {
             }
             
             response.sendRedirect(targetUrl);
-            // -----------------------------
 
         } catch (Exception e) {
             e.printStackTrace();

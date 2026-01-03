@@ -13,16 +13,13 @@ public class LogoutServlet extends HttpServlet {
     protected void doGet(HttpServletRequest request, HttpServletResponse response) 
             throws ServletException, IOException {
         
-        // 1. Récupérer la session existante oui
         HttpSession session = request.getSession(false);
         
         if (session != null) {
             System.out.println("[LOGOUT] Suppression de la session de l'utilisateur.");
-            // 2. Détruire la session (supprime TOUT ce qui est dedans)
             session.invalidate(); 
         }
 
-        // 3. Rediriger vers l'accueil (qui sera maintenant en mode non-connecté)
         response.sendRedirect(request.getContextPath() + "/home");
     }
 }

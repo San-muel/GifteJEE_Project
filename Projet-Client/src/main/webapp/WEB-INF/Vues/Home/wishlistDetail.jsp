@@ -1,5 +1,5 @@
 <%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
-<%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
+<%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c" %>
 <%@ taglib prefix="fmt" uri="http://java.sun.com/jsp/jstl/fmt" %> 
 
 <!DOCTYPE html>
@@ -15,13 +15,11 @@
         .gift-details { flex-grow: 1; min-width: 200px; }
         .input-amount { padding: 5px; width: 80px; border-radius: 4px; border: 1px solid #ccc; }
         
-        /* Boutons */
         .btn-contribute { background-color: #4caf50; color: white; border: none; padding: 8px 12px; border-radius: 4px; cursor: pointer; font-weight: bold; }
         .btn-reserve { background-color: #2196F3; color: white; border: none; padding: 8px 12px; border-radius: 4px; cursor: pointer; font-weight: bold; margin-left: 5px; }
         .btn-submit-contribution { background-color: #4caf50; color: white; border: none; padding: 5px 10px; border-radius: 4px; cursor: pointer; }
         .btn-completed { background-color: #ccc; cursor: not-allowed; color: #666; padding: 8px 12px; border:none; border-radius: 4px;}
         
-        /* Styles Barre de progression */
         .progress-container { width: 100%; background-color: #e0e0e0; border-radius: 10px; margin: 10px 0; height: 10px; overflow: hidden; }
         .progress-bar { height: 100%; background-color: #4caf50; transition: width 0.5s ease-in-out; }
         .amount-info { font-size: 0.9em; color: #555; display: flex; justify-content: space-between; }
@@ -88,7 +86,6 @@
                                                 💰 Participer
                                             </button>
 
-                                            <%-- Bouton RÉSERVER : n'apparaît que si aucune contribution n'a été faite --%>
                                             <c:if test="${gift.collectedAmount <= 0}">
                                                 <form action="${pageContext.request.contextPath}/contribution/add" method="POST" style="display:inline;">
                                                     <input type="hidden" name="giftId" value="${gift.id}">

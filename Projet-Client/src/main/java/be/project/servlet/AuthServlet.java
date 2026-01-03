@@ -22,24 +22,20 @@ public class AuthServlet extends HttpServlet {
             throws ServletException, IOException {
         
         try {
-            // 1. On passe tout directement au Modèle
             User authenticatedUser = User.login(
                 request.getParameter("email"), 
                 request.getParameter("psw")
             );
             
-            // 2. Si aucune exception n'est levée et user non null -> Succès
             HttpSession session = request.getSession();
             session.setAttribute("user", authenticatedUser);
             response.sendRedirect(request.getContextPath() + "/dashboard");
 
         } catch (IllegalArgumentException e) {
-            // 3. Erreur de validation (champs vides) venant du Modèle
             request.setAttribute("errorMessage", e.getMessage());
             doGet(request, response);
             
         } catch (Exception e) {
-            // 4. Erreur technique (Base de données, etc.)
             e.printStackTrace();
             request.setAttribute("errorMessage", "Erreur technique : " + e.getMessage());
             doGet(request, response);

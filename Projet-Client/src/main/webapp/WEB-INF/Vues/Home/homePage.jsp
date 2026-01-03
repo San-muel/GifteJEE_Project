@@ -9,7 +9,6 @@
     <link rel="stylesheet" href="${pageContext.request.contextPath}/CSS/forms.css">
     <link rel="icon" type="image/png" href="${pageContext.request.contextPath}/assets/logo.png" />
     <style>
-        /* Correction spécifique pour la page d'accueil car le main.css centre le body */
         .home-body {
             display: block !important; 
             background-color: var(--color-background, #f4f7f6);
@@ -54,9 +53,8 @@
             box-shadow: 0 8px 15px rgba(64, 181, 173, 0.2);
         }
 
-        /* Style pour MES listes */
         .card-mine {
-            border-top: 5px solid #f39c12 !important; /* Orange */
+            border-top: 5px solid #f39c12 !important; 
             background-color: #fffaf0;
         }
 
@@ -150,7 +148,6 @@
     
     <main class="grid">
         <c:forEach var="list" items="${wishlists}">
-            <%-- 1. Calcul de l'appartenance --%>
             <c:set var="isMine" value="false" />
             <c:if test="${not empty sessionScope.user}">
                 <c:forEach var="myList" items="${sessionScope.user.createdWishlists}">
@@ -160,7 +157,6 @@
                 </c:forEach>
             </c:if>
 
-            <%-- 2. Calcul du statut d'affichage --%>
             <c:set var="isDisabled" value="${list.status != 'ACTIVE'}" />
             
             <div class="card ${isDisabled ? 'card-disabled' : ''} ${isMine ? 'card-mine' : ''}" 
@@ -190,7 +186,6 @@
 
     <script>
         function checkAccess(id, status, isMine) {
-            // 1. Bloquer si la liste appartient à l'utilisateur
             if (isMine) {
                 if (confirm("C'est votre liste ! Souhaitez-vous aller dans votre espace pour la gérer ?")) {
                     window.location.href = "${pageContext.request.contextPath}/dashboard";
@@ -198,17 +193,14 @@
                 return;
             }
 
-            // 2. Bloquer si le statut n'est pas ACTIVE
             if (status !== 'ACTIVE') {
                 alert("Cette liste est actuellement " + status.toLowerCase() + " et n'est pas consultable.");
                 return;
             }
             
-            // 3. Vérifier la connexion
             const isConnected = ${not empty sessionScope.user};
             
             if (isConnected) {
-                // Utilisation de l'URL que vous avez spécifiée
                 window.location.href = "${pageContext.request.contextPath}/wishlistDetail?id=" + id;
             } else {
                 alert("Veuillez vous connecter pour voir les cadeaux de cette liste.");

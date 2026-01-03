@@ -30,13 +30,11 @@ public class Contribution implements Serializable {
         this.comment = comment;
     }
 
-    // --- ACTIVE RECORD : LECTURE (Nouveau) ---
     public static Contribution find(int id) {
         ContributionDAO dao = new ContributionDAO();
         return dao.find(id);
     }
 
-    // --- ACTIVE RECORD : ECRITURE ---
     public Contribution create(int giftId, User user) {
         ContributionDAO dao = new ContributionDAO();
         Optional<Contribution> result = dao.createContribution(this, giftId, user);
@@ -44,14 +42,12 @@ public class Contribution implements Serializable {
         if (result.isPresent()) {
             this.id = result.get().getId();
             this.contributedAt = result.get().getContributedAt();
-            // On s'assure que le giftId est bien setté si l'API ne le renvoie pas explicitement
             this.giftId = giftId; 
             return this;
         }
         return null;
     }
 
-    // --- Getters / Setters ---
     public int getUserId() { return userId; }
     public void setUserId(int userId) { this.userId = userId; }
     public int getGiftId() { return giftId; }

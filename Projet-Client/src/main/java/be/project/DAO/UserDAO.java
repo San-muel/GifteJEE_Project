@@ -1,6 +1,6 @@
 package be.project.DAO;
 
-import be.project.MODEL.User; // Vérifie la casse (MODEL ou model) // Assure-toi de l'import correct de ta config
+import be.project.MODEL.User; 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 
@@ -31,27 +31,21 @@ public class UserDAO extends DAO<User> {
         return base;
     }
 
-    /**
-     * Authentification : Appelle maintenant /users/login
-     */
     public User authenticate(String email, String psw) {
         try {
-            // CORRECTION REST : On utilise POST sur /users/login
             String url = getCleanBaseUrl() + "/users/login";
 
-            // On prépare un petit JSON pour les crédentials
-            // (Tu peux utiliser une Map ou un objet User temporaire)
             java.util.Map<String, String> creds = new java.util.HashMap<>();
             creds.put("email", email);
-            creds.put("psw", psw); // Le mot de passe part dans le corps (BODY), c'est sécurisé !
+            creds.put("psw", psw); 
             
             String jsonBody = objectMapper.writeValueAsString(creds);
 
             HttpRequest request = HttpRequest.newBuilder()
                     .uri(URI.create(url))
-                    .header("Content-Type", "application/json") // On envoie du JSON
+                    .header("Content-Type", "application/json") 
                     .header("Accept", "application/json")
-                    .POST(HttpRequest.BodyPublishers.ofString(jsonBody)) // VERBE POST
+                    .POST(HttpRequest.BodyPublishers.ofString(jsonBody)) 
                     .build();
 
             HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
@@ -71,7 +65,6 @@ public class UserDAO extends DAO<User> {
     @Override
     public List<User> findAll() {
         try {
-            // Reste sur /users (GET global)
             String url = getCleanBaseUrl() + "/users";
             
             HttpRequest request = HttpRequest.newBuilder()
@@ -97,14 +90,11 @@ public class UserDAO extends DAO<User> {
         try {
             String url = getCleanBaseUrl() + "/users"; 
             
-            // --- MAPPING MANUEL ICI ---
-            // On crée une structure simple qui ne contient QUE les 3 champs requis
             java.util.Map<String, String> registerData = new java.util.HashMap<>();
             registerData.put("username", newUser.getUsername());
             registerData.put("email", newUser.getEmail());
             registerData.put("psw", newUser.getPsw());
 
-            // Jackson va générer : {"username":"...", "email":"...", "psw":"..."}
             String jsonBody = objectMapper.writeValueAsString(registerData);
 
             System.out.println("[WEB-DAO] Envoi manuel de : " + jsonBody);

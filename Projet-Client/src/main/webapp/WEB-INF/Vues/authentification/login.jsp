@@ -1,5 +1,4 @@
 <%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
-<%-- Import de la JSTL --%>
 <%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c" %>
 
 <!DOCTYPE html>
@@ -16,16 +15,13 @@
     <div class="auth-container">
         <h1>Connexion</h1>
         
-        <%-- Remplacement du scriptlet "if" par la balise JSTL c:if --%>
         <c:if test="${not empty errorMessage}">
             <p style="color: red;">${errorMessage}</p>
         </c:if>
         
-        <%-- Utilisation de EL pour l'action du formulaire --%>
         <form action="${pageContext.request.contextPath}/auth" method="POST">
             <div>
                 <label for="email">Email :</label>
-                <%-- Utilisation de EL pour la valeur, qui gère automatiquement le null (affiche rien si vide) --%>
                 <input type="email" id="email" name="email" required 
                        value="${email}">
             </div>

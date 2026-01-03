@@ -23,7 +23,6 @@ public class Gift implements Serializable {
 
     public Gift() {}
     
-    // --- LOGIQUE MÉTIER ---
     public void calculateNewPriority(String direction) {
         int current = (this.priority == null) ? 0 : this.priority;
         if ("UP".equals(direction)) {
@@ -33,7 +32,6 @@ public class Gift implements Serializable {
         }
     }
 
-    // --- ACTIVE RECORD (CRUD) ---
     public boolean save(int wishlistId, User user, GiftDAO giftDAO) {
         Optional<Gift> result = giftDAO.createGift(this, wishlistId, user);
         if (result.isPresent()) {
@@ -55,7 +53,6 @@ public class Gift implements Serializable {
         return giftDAO.deleteGift(this.id, wishlistId, user);
     }
 
-    // --- GETTERS / SETTERS ---
     public int getId() { return id; }
     public void setId(int id) { this.id = id; }
     public String getName() { return name; }

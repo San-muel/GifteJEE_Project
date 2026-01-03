@@ -34,7 +34,6 @@ public class Wishlist implements Serializable {
         this.status = status;
     }
 
-    // --- GETTERS & SETTERS ---
     public int getId() { return id; }
     public void setId(int id) { this.id = id; }
     public String getTitle() { return title; }
@@ -48,8 +47,6 @@ public class Wishlist implements Serializable {
     public Set<Gift> getGifts() { return gifts; }
     public void setGifts(Set<Gift> gifts) { this.gifts = gifts; }
     
-    // --- MÉTHODES D'ACCÈS AUX DONNÉES (ACTIVE RECORD) ---
-
     public static List<Wishlist> findAll() {
         WishlistDAO dao = new WishlistDAO();
         return dao.findAll();
@@ -60,28 +57,15 @@ public class Wishlist implements Serializable {
         return dao.find(id);
     }
 
-    // =========================================================================
-    // NOUVELLE MÉTHODE MÉTIER (Déplacée depuis le Servlet)
-    // =========================================================================
-    /**
-     * Récupère toutes les listes, puis filtre pour ne garder que 
-     * celles qui sont ACTIVE et dont la date n'est pas passée.
-     */
     public static List<Wishlist> findActiveAndValid() {
-        // 1. On récupère tout
         List<Wishlist> allWishlists = findAll();
-        
-        // 2. Date du jour pour comparaison
         LocalDate today = LocalDate.now();
 
-        // 3. Filtrage (Logique métier)
         return allWishlists.stream()
             .filter(w -> w.getStatus() == Status.ACTIVE)
-            // On garde si pas de date (null) OU si la date est >= aujourd'hui
             .filter(w -> w.getExpirationDate() == null || !w.getExpirationDate().isBefore(today))
             .collect(Collectors.toList());
     }
-    // =========================================================================
 
     public boolean toggleStatus(User user) {
         System.out.println("[METIER MODEL] Début de la bascule. Statut actuel : " + this.status);
@@ -144,7 +128,6 @@ public class Wishlist implements Serializable {
         if (this.gifts == null) return new ArrayList<>();
         
         List<Gift> sorted = new ArrayList<>(this.gifts);
-        // Tri : Prio 1 en premier, Prio 5 en dernier
         Collections.sort(sorted, (g1, g2) -> {
             Integer p1 = (g1.getPriority() != null) ? g1.getPriority() : 3;
             Integer p2 = (g2.getPriority() != null) ? g2.getPriority() : 3;

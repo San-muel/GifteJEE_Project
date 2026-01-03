@@ -22,21 +22,10 @@ public class WishlistDAO extends DAO<Wishlist> {
 
     public WishlistDAO() {
         this.objectMapper = new ObjectMapper();
-        // Configuration pour gérer LocalDate correctement
         this.objectMapper.registerModule(new JavaTimeModule());
         this.objectMapper.disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
     }
     
-    // --- METHODES DE PARTAGE (Venant de HEAD) ---
-
-    /**
-     * Permet de partager une wishlist avec un autre utilisateur
-     */
-	// Ajoute le paramètre token (récupéré depuis la session de l'utilisateur connecté)
-    /**
-     * Permet de partager une wishlist avec un autre utilisateur
-     * @param token Le token JWT (ou l'ID user si pas de JWT)
-     */
     public boolean share(int wishlistId, int targetUserId, String notification, String token) {
         try {
             System.out.println("DEBUG DAO SHARE - Token reçu : " + token);
@@ -56,14 +45,12 @@ public class WishlistDAO extends DAO<Wishlist> {
 
             String json = objectMapper.writeValueAsString(data);
 
-            // GESTION SÉCURISÉE DU HEADER AUTHORIZATION
-            // Si le token est null, on met une chaîne vide pour éviter le crash
             String authHeader = (token != null) ? "Bearer " + token : "";
 
             HttpRequest request = HttpRequest.newBuilder()
                     .uri(URI.create(url))
                     .header("Content-Type", "application/json")
-                    .header("Authorization", authHeader) // <--- Envoi correct
+                    .header("Authorization", authHeader)
                     .POST(HttpRequest.BodyPublishers.ofString(json))
                     .build();
 
@@ -79,16 +66,11 @@ public class WishlistDAO extends DAO<Wishlist> {
         }
     }
 
-    // Garder l'ancienne signature pour la compatibilité si nécessaire
 	public boolean share(int wishlistId, int targetUserId, String token) {
 	    return this.share(wishlistId, targetUserId, null, token);
 	}
 
-    // --- METHODES DE GESTION WISHLIST (Venant de AddWishlist) ---
-
-    // POST : /wishlists
     public Optional<Wishlist> createWishlist(Wishlist wishlist, User user) {
-        // Attention au slash final dans l'URL
         String baseUrl = ConfigLoad.API_BASE_URL;
         if (!baseUrl.endsWith("/")) baseUrl += "/";
         String url = baseUrl + "wishlists"; 
@@ -118,7 +100,6 @@ public class WishlistDAO extends DAO<Wishlist> {
         return Optional.empty();
     }
 
-    // PUT : /wishlists/{id}
     public boolean updateWishlist(Wishlist wishlist, User user) {
         String baseUrl = ConfigLoad.API_BASE_URL;
         if (!baseUrl.endsWith("/")) baseUrl += "/";
@@ -126,7 +107,6 @@ public class WishlistDAO extends DAO<Wishlist> {
         System.out.println("DEBUG URL APPELE: " + url);
         
         try {
-	        	
             String jsonBody = objectMapper.writeValueAsString(wishlist);
 
             HttpRequest request = HttpRequest.newBuilder()
@@ -145,7 +125,6 @@ public class WishlistDAO extends DAO<Wishlist> {
         }
     }
 
-    // DELETE : /wishlists/{id}
     public boolean deleteWishlist(int wishlistId, User user) {
         String baseUrl = ConfigLoad.API_BASE_URL;
         if (!baseUrl.endsWith("/")) baseUrl += "/";
@@ -167,16 +146,12 @@ public class WishlistDAO extends DAO<Wishlist> {
         }
     }
 
-    // --- IMPLEMENTATION ABSTRAITES ---
-
     @Override 
     public List<Wishlist> findAll() {
         try {
             String baseUrl = ConfigLoad.API_BASE_URL;
             if (baseUrl.endsWith("/")) baseUrl = baseUrl.substring(0, baseUrl.length() - 1);
             
-            // --- MODIFICATION RESTFUL ICI ---
-            // On utilise le paramètre de requête standard au lieu de /all
             String url = baseUrl + "/wishlists?filter=public";
             
             System.out.println("[DEBUG CLIENT DAO] URL Appelée pour findAll : " + url);
@@ -203,7 +178,6 @@ public class WishlistDAO extends DAO<Wishlist> {
         }
     }
 
-    // Ces méthodes ne sont pas utilisées car on passe par les méthodes spécifiques avec User
     @Override public boolean create(Wishlist obj) { return false; }
     @Override public boolean delete(Wishlist obj) { return false; }
     @Override public boolean update(Wishlist obj) { return false; }
@@ -229,7 +203,6 @@ public class WishlistDAO extends DAO<Wishlist> {
             if (response.statusCode() == 200) {
                 String jsonRaw = response.body();
                 
-                // --- LOGS DE DÉBOGAGE ---
                 System.out.println("[DEBUG CLIENT DAO] JSON BRUT REÇU : " + jsonRaw);
                 
                 Wishlist wishlist = objectMapper.readValue(jsonRaw, Wishlist.class);
@@ -245,7 +218,6 @@ public class WishlistDAO extends DAO<Wishlist> {
                         System.out.println("[DEBUG CLIENT DAO] ATTENTION : La liste 'gifts' est NULL après désérialisation !");
                     }
                 }
-                // ------------------------
                 
                 return wishlist;
             } else {

@@ -11,19 +11,16 @@
     <link rel="stylesheet" href="${pageContext.request.contextPath}/CSS/main.css">
     <link rel="icon" type="image/png" href="${pageContext.request.contextPath}/assets/logo.png" />
     <style>
-        /* --- STYLES EXISTANTS --- */
         .btn-copy-link { background-color: #4caf50; color: white; border: none; padding: 5px 10px; border-radius: 4px; cursor: pointer; font-size: 0.85em; margin-top: 5px; }
         .btn-copy-link:hover { background-color: #45a049; }
         .wishlist-actions { display: flex; gap: 10px; margin-top: 10px; align-items: center; }
         
-        /* Styles pour l'affichage partagé (Fusion des deux) */
         .shared-gifts-display { margin-top: 15px; padding: 15px; background: #fff; border-radius: 8px; border: 1px solid #ddd; box-shadow: inset 0 2px 4px rgba(0,0,0,0.05); }
         .gift-item-shared { display: flex; flex-direction: column; padding: 15px; border-bottom: 1px solid #eee; background-color: #fafafa; margin-bottom: 10px; border-radius: 6px;} 
         
         .btn-view-gifts { background-color: #2196f3; color: white; border: none; padding: 8px 15px; border-radius: 4px; cursor: pointer; }
         .badge-expired { background-color: #f44336; color: white; padding: 4px 8px; border-radius: 4px; font-size: 0.8em; }
 
-        /* --- STYLES CONTRIBUTIONS (VENANT DU HEAD) --- */
         .contribution-box { display: none; margin-top: 10px; padding: 10px; background: #fff; border-radius: 5px; border: 1px solid #ddd; }
         .input-amount { padding: 5px; width: 80px; border-radius: 4px; border: 1px solid #ccc; }
         .btn-contribute { background-color: #4caf50; color: white; border: none; padding: 6px 10px; border-radius: 4px; cursor: pointer; font-weight: bold; font-size: 0.9em; }
@@ -41,9 +38,8 @@
         .gift-content { flex-grow: 1; }
         .gift-actions-col { display: flex; flex-direction: column; align-items: flex-end; min-width: 140px;}
 
-        /* --- CENTRE DE NOTIFICATION (VENANT DU HEAD) --- */
         .notification-center {
-            background-color: #fff3cd; /* Jaune pâle pour attirer l'attention */
+            background-color: #fff3cd; 
             border: 1px solid #ffeeba;
             color: #856404;
             padding: 15px;
@@ -61,7 +57,6 @@
         .notif-item:last-child { border-bottom: none; }
         .bell-icon { font-size: 1.2em; }
 
-        /* --- STYLE POUR WISHLIST BLOQUÉE (VENANT DE TestAvantGiftUpdate) --- */
         .wishlist-item.is-inactive {
             background-color: #f2f2f2;
             border-left: 5px solid #bdc3c7;
@@ -84,7 +79,6 @@
             <a href="${pageContext.request.contextPath}/home" class="btn-nav">🏠 Retour à l'accueil</a>
         </header>
 
-        <%-- NOTIFICATIONS (DU HEAD) --%>
         <c:if test="${not empty notifications}">
             <div class="notification-center">
                 <h3><span class="bell-icon">🔔</span> Activité récente sur les listes suivies</h3>
@@ -96,11 +90,9 @@
             </div>
         </c:if>
 
-        
-<section>
+        <section>
             <h2>Mes Listes de Souhaits</h2>
 
-            <%-- Formulaire de création de liste --%>
             <div class="add-gift-box" style="background-color: #e3f2fd; margin-bottom: 20px; border-color: #2196F3;">
                 <h3>✨ Créer une nouvelle liste</h3>
                 <form action="${pageContext.request.contextPath}/wishlist/create" method="POST" class="gift-form">
@@ -119,7 +111,6 @@
                 <c:when test="${not empty user.createdWishlists}">
                     <ul class="wishlist-list">
                         <c:forEach var="wl" items="${user.createdWishlists}">
-                            <%-- LOGIQUE DE BLOCAGE WISHLIST --%>
                             <c:set var="today" value="<%= java.time.LocalDate.now() %>" />
                             <c:set var="isExpired" value="${wl.expirationDate.isBefore(today)}" />
                             <c:set var="isBlocked" value="${wl.status != 'ACTIVE' || isExpired}" />
@@ -179,7 +170,6 @@
                                     </c:choose>
                                 </div>
 
-                                <%-- Ajouter un cadeau --%>
                                 <div class="add-gift-box" style="margin-top:15px;">
                                     <h4>➕ Ajouter un cadeau</h4>
                                     <form action="${pageContext.request.contextPath}/gift/add" method="POST" class="gift-form" style="display: flex; gap: 10px; flex-wrap: wrap;">
@@ -205,15 +195,13 @@
                                 </div>
                                 <hr>
                                 
-<c:choose>
-                                    <%-- On utilise directement la propriété du modèle --%>
+                                <c:choose>
                                     <c:when test="${not empty wl.giftsSortedByPriority}">
                                         <ul class="gift-list">
                                         <c:forEach var="gift" items="${wl.giftsSortedByPriority}">
                                             <c:set var="isGiftLocked" value="${gift.readOnly}" />
 
                                             <li class="gift-item" style="flex-direction: column; align-items: stretch;">
-                                                <%-- LE CONTENU DE L'AFFICHAGE CADEAU RESTE IDENTIQUE --%>
                                                 <div style="display: flex; justify-content: space-between; align-items: center; width: 100%;">
                                                     <div class="gift-info">
                                                         <c:if test="${not empty gift.photoUrl}">
@@ -254,7 +242,6 @@
                                                     </div>
                                                 </div>
 
-                                                <%-- FORMULAIRE MODIFICATION --%>
                                                 <c:if test="${not isGiftLocked && not isBlocked}">
                                                     <div id="modify-form-${gift.id}" class="add-gift-box" style="display:none; margin-top: 10px; background-color: #fff9c4; border: 1px solid #fbc02d;">
                                                         <form action="${pageContext.request.contextPath}/gift/update" method="POST" class="gift-form" style="display:flex; flex-direction: column; gap: 8px;">
@@ -306,8 +293,7 @@
             </c:choose>
         </section>
 
-        <%-- SECTION DES LISTES PARTAGÉES (Fusionnée : Contributions du HEAD + Structure du TEST) --%>
-<section class="shared-section">
+        <section class="shared-section">
             <h2>Listes partagées avec moi</h2>
             <c:choose>
                 <c:when test="${not empty user.sharedWishlists}">
@@ -328,9 +314,7 @@
 
                                     <div id="shared-gifts-container-${wl.id}" class="shared-gifts-display" style="display:none;">
                                         
-                                        <%-- TRI AUTOMATIQUE VIA LE MODELE (MVC Respecté) --%>
                                         <c:choose>
-                                            <%-- On utilise la propriété du modèle ici aussi --%>
                                             <c:when test="${not empty wl.giftsSortedByPriority}">
                                                 <div class="gift-list">
                                                     <c:forEach var="gift" items="${wl.giftsSortedByPriority}">
@@ -445,7 +429,6 @@
     </div>
     
     <script>
-        // Fonctions JavaScript simples pour l'interactivité
         function toggleModifyForm(id) {
             var form = document.getElementById('modify-form-' + id);
             form.style.display = (form.style.display === 'none' || form.style.display === '') ? 'block' : 'none';
@@ -462,13 +445,10 @@
         }
 
         function copyInviteLink(url) {
-            // Utilisation de l'API moderne du presse-papiers
             navigator.clipboard.writeText(url).then(function() {
-                // Optionnel : Un petit feedback visuel
                 alert("Lien copié dans le presse-papiers !\n" + url);
             }).catch(function(err) {
                 console.error('Erreur lors de la copie : ', err);
-                // Fallback pour les vieux navigateurs ou contextes non-sécurisés
                 const textArea = document.createElement("textarea");
                 textArea.value = url;
                 document.body.appendChild(textArea);

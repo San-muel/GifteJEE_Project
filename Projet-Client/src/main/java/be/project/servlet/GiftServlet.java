@@ -26,11 +26,9 @@ public class GiftServlet extends HttpServlet {
         }
 
         try {
-            // Extraction des IDs communs
             String wIdParam = request.getParameter("wishlistId");
             int wId = (wIdParam != null) ? Integer.parseInt(wIdParam) : 0;
             
-            // --- 1. GESTION DES PRIORITÉS ---
             if ("/priority".equals(path)) {
                 int gId = Integer.parseInt(request.getParameter("giftId"));
                 int currentPrio = Integer.parseInt(request.getParameter("currentPriority"));
@@ -39,44 +37,39 @@ public class GiftServlet extends HttpServlet {
                 gift.setId(gId);
                 gift.setPriority(currentPrio);
                 
-                // Logique métier déléguée au modèle
                 gift.calculateNewPriority(request.getParameter("direction"));
 
                 if (gift.updatePriority(wId, user, giftDAO)) {
-                    // Mise à jour mémoire déléguée au User
                     user.syncGiftUpdate(wId, gift); 
                 }
                 response.sendRedirect(request.getContextPath() + "/dashboard?status=priority_ok");
 
-            // --- 2. AJOUT CADEAU ---
             } else if ("/add".equals(path)) {
                 Gift gift = extract(request);
                 
                 if (gift.save(wId, user, giftDAO)) {
-                    user.syncGiftAddition(wId, gift); // User gère sa mémoire
+                    user.syncGiftAddition(wId, gift); 
                     response.sendRedirect(request.getContextPath() + "/dashboard?status=added");
                 } else {
                     response.sendRedirect(request.getContextPath() + "/dashboard?error=failed_to_save");
                 }
 
-            // --- 3. UPDATE CADEAU ---
             } else if ("/update".equals(path)) {
                 Gift gift = extract(request); 
                 gift.setId(Integer.parseInt(request.getParameter("giftId")));
                 
                 if (gift.update(wId, user, giftDAO)) {
-                    user.syncGiftUpdate(wId, gift); // User gère sa mémoire
+                    user.syncGiftUpdate(wId, gift); 
                 }
                 response.sendRedirect(request.getContextPath() + "/dashboard?status=updated");
 
-            // --- 4. DELETE CADEAU ---
             } else if ("/delete".equals(path)) {
                 int gId = Integer.parseInt(request.getParameter("giftId"));
                 Gift gift = new Gift();
                 gift.setId(gId);
                 
                 if (gift.delete(wId, user, giftDAO)) {
-                    user.syncGiftRemoval(wId, gId); // User gère sa mémoire
+                    user.syncGiftRemoval(wId, gId); 
                 }
                 response.sendRedirect(request.getContextPath() + "/dashboard?status=deleted");
             }
@@ -87,7 +80,6 @@ public class GiftServlet extends HttpServlet {
         }
     }
 
-    // Extraction simple des paramètres formulaire
     private Gift extract(HttpServletRequest req) {
         Gift g = new Gift();
         g.setName(req.getParameter("name"));

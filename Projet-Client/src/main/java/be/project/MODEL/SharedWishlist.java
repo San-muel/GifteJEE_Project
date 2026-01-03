@@ -22,7 +22,6 @@ public class SharedWishlist implements Serializable {
         this.notification = notification;
     }
 
-    // --- GETTERS & SETTERS ---
     public int getId() { return id; }
     public void setId(int id) { this.id = id; }
     public LocalDateTime getSharedAt() { return sharedAt; }
@@ -30,19 +29,11 @@ public class SharedWishlist implements Serializable {
     public String getNotification() { return notification; }
     public void setNotification(String notification) { this.notification = notification; }
 
-    /**
-     * Méthode principale de partage
-     */
     public boolean shareWishlist(int wishlistId, int targetUserId, String note, String token) {
-        // 1. On stocke la note dans l'objet actuel
         this.notification = note;
-        
-        // 2. On appelle le DAO avec TOUS les paramètres, y compris le TOKEN
-        // Note: Assure-toi que ton WishlistDAO possède bien la méthode share(int, int, String, String)
         return wishlistDAO.share(wishlistId, targetUserId, note, token); 
     }
    
-
     @Override
     public String toString() {
         return "SharedWishlist{id=" + id + ", sharedAt=" + sharedAt + ", notification='" + notification + "'}";

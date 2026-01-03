@@ -14,12 +14,10 @@ import java.util.List;
 public class DashboardServlet extends HttpServlet {
 
     private static final long serialVersionUID = 1L;
-    // Plus besoin d'importer ou d'instancier ContributionDAO ici !
 
     protected void doGet(HttpServletRequest request, HttpServletResponse response) 
             throws ServletException, IOException {
         
-        // --- 1. SÉCURITÉ & CACHE (Rôle du Contrôleur) ---
         preventCaching(response);
 
         HttpSession session = request.getSession(false);
@@ -31,23 +29,17 @@ public class DashboardServlet extends HttpServlet {
             return;
         }
 
-        // --- 2. APPEL AU MODÈLE (Une ligne pour tout faire) ---
         try {
-            // A. On dit à l'utilisateur de rafraîchir ses données partagées
             user.refreshSharedListsData();
             
-            // B. On récupère les notifications calculées par le modèle
             List<String> notifications = user.generateDashboardNotifications();
             
-            // C. On envoie à la vue
             request.setAttribute("notifications", notifications);
             
         } catch (Exception e) {
-            e.printStackTrace(); // Log serveur
-            // On ne plante pas l'appli pour une notif, on continue vers la vue
+            e.printStackTrace();
         }
 
-        // --- 3. AFFICHAGE ---
         request.getRequestDispatcher("/WEB-INF/Vues/Home/displayingWG.jsp").forward(request, response);
     }
 
@@ -56,9 +48,6 @@ public class DashboardServlet extends HttpServlet {
         doGet(request, response);
     }
 
-    /**
-     * Méthode utilitaire privée pour alléger le doGet
-     */
     private void preventCaching(HttpServletResponse response) {
         response.setHeader("Cache-Control", "no-cache, no-store, must-revalidate");
         response.setHeader("Pragma", "no-cache");

@@ -8,7 +8,7 @@
 
 <context-param>
     <param-name>apiBaseUrl</param-name>
-    <param-value>http://localhost:8080/Projet-API/api/</param-value>
+    <param-value>http://localhost:8081/Projet-API/api/</param-value>
 </context-param>
   
   <welcome-file-list>

@@ -1,223 +1,213 @@
 <%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
-<%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
-<%@ taglib prefix="fn" uri="http://java.sun.com/jsp/jstl/functions" %> 
-<jsp:useBean id="user" scope="session" type="be.project.MODEL.User" />
-
+<%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c" %>
 <!DOCTYPE html>
 <html lang="fr">
 <head>
     <meta charset="UTF-8">
-    <title>Partager ma Liste - Giveo</title>
+    <title>Accueil - GiftManager</title>
     <link rel="stylesheet" href="${pageContext.request.contextPath}/CSS/main.css">
     <link rel="stylesheet" href="${pageContext.request.contextPath}/CSS/forms.css">
     <link rel="icon" type="image/png" href="${pageContext.request.contextPath}/assets/logo.png" />
-
     <style>
-        /* Conteneur de la grille avec SCROLL */
-        .user-grid {
-            display: grid;
-            /* Crée des colonnes automatiques de min 220px de large */
-            grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
-            gap: 15px;
-            
-            /* Gère la hauteur max et le scroll */
-            width: 100%;
-            max-height: 450px;       /* Hauteur fixe visible */
-            overflow-y: auto;        /* Barre de défilement si ça dépasse */
-            
-            padding: 15px;
-            background-color: #fafafa;
-            border: 1px solid #e0e0e0;
-            border-radius: 8px;
-            box-sizing: border-box;
-            margin-bottom: 20px;
+        .home-body {
+            display: block !important; 
+            background-color: var(--color-background, #f4f7f6);
+            margin: 0;
+            font-family: 'Segoe UI', sans-serif;
         }
 
-        /* Design de la Carte Utilisateur */
-        .user-card {
-            display: flex;
-            align-items: center; /* Centre verticalement */
+        .header {
             background: white;
-            border: 1px solid #ddd;
-            border-radius: 8px;
-            padding: 10px;
+            padding: 20px 50px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+        
+        .header h1 { border: none; margin: 0; font-size: 1.6rem; color: #2c3e50; }
+        
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 25px;
+            padding: 40px;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .card {
+            background-color: white;
+            border-top: 5px solid var(--color-primary, #1abc9c);
+            padding: 25px;
+            border-radius: 10px;
+            text-align: center;
             cursor: pointer;
-            transition: all 0.2s ease;
+            transition: transform 0.3s, box-shadow 0.3s;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
             position: relative;
         }
 
-        /* Effet au survol */
-        .user-card:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
-            border-color: #40B5AD; /* Couleur Turquoise */
+        .card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 15px rgba(64, 181, 173, 0.2);
         }
 
-        /* Effet quand SÉLECTIONNÉ */
-        .user-card.selected {
-            border: 2px solid #40B5AD;
-            background-color: #e0f7fa;
+        .card-mine {
+            border-top: 5px solid #f39c12 !important; 
+            background-color: #fffaf0;
         }
 
-        /* Masquer le bouton radio moche */
-        .user-card input[type="radio"] {
+        .badge-mine {
             position: absolute;
-            opacity: 0;
-            pointer-events: none;
+            top: 10px;
+            right: 10px;
+            background: #f39c12;
+            color: white;
+            padding: 3px 8px;
+            border-radius: 4px;
+            font-size: 0.7rem;
+            font-weight: bold;
         }
 
-        /* Avatar rond */
-        .user-avatar {
-            width: 40px;
-            height: 40px;
-            min-width: 40px; /* Empêche l'écrasement */
-            background-color: #FFD700; /* Jaune/Or */
-            color: white;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
+        .card-disabled {
+            background-color: #f0f0f0 !important;
+            border-top: 5px solid #bdc3c7 !important;
+            color: #95a5a6;
+            cursor: not-allowed !important;
+            filter: grayscale(100%);
+            opacity: 0.7;
+            transform: none !important;
+            box-shadow: none !important;
+        }
+        
+        .status-badge {
+            font-size: 0.8em;
+            padding: 2px 8px;
+            border-radius: 4px;
             font-weight: bold;
-            font-size: 1.1em;
-            margin-right: 12px;
+            display: inline-block;
+            margin-bottom: 10px;
             text-transform: uppercase;
         }
+        
+        .badge-expired { background: #e74c3c; color: white; }
+        .badge-inactive { background: #95a5a6; color: white; }
 
-        /* Conteneur Texte (Nom + Email) */
-        .user-info {
-            display: flex;
-            flex-direction: column;
-            overflow: hidden; /* Pour gérer les noms longs */
+        .btn-dashboard {
+            display: inline-block;
+            padding: 10px 15px;
+            background-color: var(--color-secondary, #34495e);
+            color: white;
+            border-radius: 6px;
+            text-decoration: none;
+            font-weight: bold;
         }
 
-        .user-name {
-            font-weight: 600;
-            color: #333;
-            font-size: 0.95em;
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis; /* Met des "..." si trop long */
+        .btn-login {
+            background-color: var(--color-primary, #1abc9c);
+            color: white;
+            padding: 10px 20px;
+            border-radius: 6px;
+            text-decoration: none;
+            font-weight: bold;
         }
 
-        .user-email {
-            font-size: 0.75em;
-            color: #888;
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-        }
-
-        /* Style de la barre de recherche */
-        .search-box {
-            width: 100%;
-            padding: 12px 15px;
-            border: 2px solid #eee;
-            border-radius: 25px;
-            margin-bottom: 20px;
-            font-size: 1em;
-            box-sizing: border-box;
-        }
-        .search-box:focus {
-            border-color: #40B5AD;
-            outline: none;
+        .owner-warning {
+            color: #d35400;
+            font-size: 0.8rem;
+            margin-top: 10px;
+            display: block;
+            font-style: italic;
         }
     </style>
 </head>
-<body>
+<body class="home-body">
 
-    <div style="position: absolute; top: 20px; left: 20px;">
-        <a href="${pageContext.request.contextPath}/dashboard" style="font-weight: bold; text-decoration: none; color: #333;">&larr; Retour</a>
-    </div>
-
-    <div class="container">
-        
-        <div class="share-header">
-            <h1>🎁 Partager la liste <span style="color:#40B5AD;">#<c:out value="${wishlistId}" /></span></h1>
-            <p style="color: #666;">Choisissez un ami pour lui envoyer vos idées cadeaux.</p>
+    <div class="header">
+        <div class="header-left">
+            <c:choose>
+                <c:when test="${not empty sessionScope.user}">
+                    <h1>Bonjour, <c:out value="${sessionScope.user.username}" /> ! 👋</h1>
+                    <a href="${pageContext.request.contextPath}/dashboard" class="btn-dashboard">Accéder à mon espace</a>
+                </c:when>
+                <c:otherwise>
+                    <h1>Bienvenue sur GiftManager 🎁</h1>
+                </c:otherwise>
+            </c:choose>
         </div>
-
-        <form action="${pageContext.request.contextPath}/share" method="POST" onsubmit="return validateSelection()">
-            <input type="hidden" name="wishlistId" value="${wishlistId}">
-            
-            <input type="text" id="searchInput" class="search-box" placeholder="🔍 Rechercher un ami par nom ou email..." onkeyup="filterUsers()">
-
-            <div class="user-grid" id="userList">
-                <c:forEach var="u" items="${users}">
-                    <c:if test="${u.id != user.id}">
-                        <label class="user-card" id="card-${u.id}" onclick="selectUser(${u.id})">
-                            <input type="radio" name="targetUserId" value="${u.id}">
-                            
-                            <div class="user-avatar">
-                                <c:out value="${fn:substring(u.username, 0, 1)}" />
-                            </div>
-                            
-                            <div class="user-info">
-                                <div class="user-name"><c:out value="${u.username}" /></div>
-                                <div class="user-email"><c:out value="${u.email}" /></div>
-                            </div>
-                        </label>
+        <div class="header-right">
+            <c:if test="${empty sessionScope.user}">
+                <a href="${pageContext.request.contextPath}/auth" class="btn-login">Se connecter</a>
+            </c:if>
+            <c:if test="${not empty sessionScope.user}">
+                <a href="${pageContext.request.contextPath}/logout" style="color: #e74c3c; text-decoration: none;">Déconnexion</a>
+            </c:if>
+        </div>
+    </div>
+    
+    <main class="grid">
+        <c:forEach var="list" items="${wishlists}">
+            <c:set var="isMine" value="false" />
+            <c:if test="${not empty sessionScope.user}">
+                <c:forEach var="myList" items="${sessionScope.user.createdWishlists}">
+                    <c:if test="${myList.id == list.id}">
+                        <c:set var="isMine" value="true" />
                     </c:if>
                 </c:forEach>
-            </div>
+            </c:if>
 
-            <div style="margin-top: 20px;">
-                <label for="msg"><strong>Petit mot doux (optionnel) :</strong></label>
-                <textarea id="msg" name="notification" class="message-area" rows="3" 
-                    style="width:100%; padding:10px; border-radius:8px; border:1px solid #ddd; margin-top:5px;" 
-                    placeholder="Ex: Salut ! Voici ma liste pour Noël, merci d'avance !"></textarea>
-            </div>
-
-            <button type="submit" class="btn-submit" style="margin-top: 20px; width:100%; padding:12px; background-color:#40B5AD; color:white; border:none; border-radius:6px; font-weight:bold; cursor:pointer;">Envoyer l'invitation ✨</button>
+            <c:set var="isDisabled" value="${list.status != 'ACTIVE'}" />
             
-            <p style="text-align: center; margin-top: 15px;">
-                <a href="${pageContext.request.contextPath}/dashboard" style="color: #999; font-size: 0.9em;">Annuler</a>
-            </p>
-        </form>
-    </div>
+            <div class="card ${isDisabled ? 'card-disabled' : ''} ${isMine ? 'card-mine' : ''}" 
+                 onclick="checkAccess(${list.id}, '${list.status}', ${isMine})">
+                
+                <c:choose>
+                    <c:when test="${isDisabled}">
+                        <span class="status-badge ${list.status == 'EXPIRED' ? 'badge-expired' : 'badge-inactive'}">
+                            <c:out value="${list.status}" />
+                        </span>
+                    </c:when>
+                    <c:when test="${isMine}">
+                        <span class="badge-mine">MA LISTE</span>
+                    </c:when>
+                </c:choose>
+                
+                <h3><c:out value="${list.title}" /></h3>
+                <p>Occasion: <strong><c:out value="${list.occasion}" /></strong></p>
+                <small>Expire le: <c:out value="${list.expirationDate}" /></small>
+                
+                <c:if test="${isMine && !isDisabled}">
+                    <span class="owner-warning">🚫 Consultation uniquement (Propriétaire)</span>
+                </c:if>
+            </div>
+        </c:forEach>
+    </main>
 
     <script>
-        // Fonction pour gérer l'aspect visuel de la sélection
-        function selectUser(id) {
-            // 1. On retire la classe 'selected' de toutes les cartes
-            document.querySelectorAll('.user-card').forEach(card => {
-                card.classList.remove('selected');
-            });
-            
-            // 2. On ajoute la classe 'selected' à celle qu'on vient de cliquer
-            const selectedCard = document.getElementById('card-' + id);
-            if(selectedCard) {
-                selectedCard.classList.add('selected');
-                // On force le check du radio button
-                const radio = selectedCard.querySelector('input[type="radio"]');
-                if(radio) radio.checked = true;
-            }
-        }
-
-        // Fonction de filtrage
-        function filterUsers() {
-            let filter = document.getElementById('searchInput').value.toLowerCase();
-            let cards = document.querySelectorAll('.user-card');
-            
-            cards.forEach(card => {
-                let name = card.querySelector('.user-name').innerText.toLowerCase();
-                let email = card.querySelector('.user-email').innerText.toLowerCase();
-                
-                if (name.includes(filter) || email.includes(filter)) {
-                    card.style.display = "flex"; 
-                } else {
-                    card.style.display = "none";
+        function checkAccess(id, status, isMine) {
+            if (isMine) {
+                if (confirm("C'est votre liste ! Souhaitez-vous aller dans votre espace pour la gérer ?")) {
+                    window.location.href = "${pageContext.request.contextPath}/dashboard";
                 }
-            });
-        }
-
-        function validateSelection() {
-            let selected = document.querySelector('input[name="targetUserId"]:checked');
-            if (!selected) {
-                alert("Oups ! Vous avez oublié de sélectionner un ami.");
-                return false;
+                return;
             }
-            return true;
+
+            if (status !== 'ACTIVE') {
+                alert("Cette liste est actuellement " + status.toLowerCase() + " et n'est pas consultable.");
+                return;
+            }
+            
+            const isConnected = ${not empty sessionScope.user};
+            
+            if (isConnected) {
+                window.location.href = "${pageContext.request.contextPath}/wishlistDetail?id=" + id;
+            } else {
+                alert("Veuillez vous connecter pour voir les cadeaux de cette liste.");
+                window.location.href = "${pageContext.request.contextPath}/auth";
+            }
         }
     </script>
+
 </body>
 </html>
